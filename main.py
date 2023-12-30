@@ -133,7 +133,6 @@ class GUI:
         def loadVideo():
             files = os.listdir(folderPath)
             chosenFile = files[random.randint(0, len(files)-1)]
-            chosenFile = "boobs (online-video-cutter.com).mp4"
 
             self.video(r"{}".format(folderPath + "\\" + chosenFile))
             time.sleep(1)
