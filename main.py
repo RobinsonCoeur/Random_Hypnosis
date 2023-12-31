@@ -103,7 +103,7 @@ class GUI:
             self.mediaPlayer.play()
 
             start = time.time()
-            time.sleep(1)
+            time.sleep(0.5)
 
             id = find_window(title='VLC (Direct3D11 output)') 
             mouse.move(coords=(-10000, 500))
