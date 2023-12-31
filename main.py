@@ -1,7 +1,9 @@
 import os 
+
 from pywinauto.findwindows    import find_window
 from pywinauto import mouse
 import win32gui 
+from ctypes import windll
 
 import keyboard
 import random
@@ -25,8 +27,11 @@ class GUI:
         self.root.title("Playlist Creator")
         self.root.geometry('380x420')
 
-        self.mediaPlayer = vlc.MediaPlayer()
+        self.taskBar = windll.user32.FindWindowA(b'Shell_TrayWnd', None)
+        windll.user32.ShowWindow(self.taskBar, 9)
 
+        self.mediaPlayer = vlc.MediaPlayer()
+        
         self.launchTimeRange =  3600 #in seconds
         
         self.setupMenuFrame()
@@ -98,35 +103,32 @@ class GUI:
         media = vlc.Media(file)
         self.mediaPlayer.set_media(media)
  
-        def videoThread():
-            self.mediaPlayer.set_fullscreen(True)
-            self.mediaPlayer.play()
+        def exitVideo():
+            self.mediaPlayer.stop()
+            windll.user32.ShowWindow(self.taskBar, 9)
 
-            start = time.time()
-            time.sleep(0.5)
+        self.mediaPlayer.set_fullscreen(True)
+        self.mediaPlayer.play()
 
-            id = find_window(title='VLC (Direct3D11 output)') 
-            mouse.move(coords=(-10000, 500))
+        start = time.time()
+        time.sleep(0.8)
 
-            win32gui.ShowWindow(id,5)
-            win32gui.SetForegroundWindow(id)
+        id = find_window(title='VLC (Direct3D11 output)') 
+        mouse.move(coords=(-10000, 500))
+                
+        win32gui.ShowWindow(id,5)
+        win32gui.SetForegroundWindow(id)
+        windll.user32.ShowWindow(self.taskBar, 0)
 
-            while True:
-                if time.time() - start >= self.mediaPlayer.get_length()/1000 - 0.5:
-                    self.mediaPlayer.stop()
-                    break
-
-        t1=Thread(target=videoThread)
-        t1.start()
-
-        def exitThread():
-            while True:
-                if keyboard.is_pressed("a"):
-                    self.mediaPlayer.stop()
-                    break
-            
-        t2 = Thread(target = exitThread)
-        t2.start()
+        while True:
+            if time.time() - start >= self.mediaPlayer.get_length()/1000 - 0.5:
+                print("over")
+                exitVideo()
+                break
+            if keyboard.is_pressed("a"):
+                print("forced")
+                exitVideo()
+                break
 
     def randomEvent(self, folderPath):
         eventSchedule = sched.scheduler(time.time, time.sleep)
@@ -143,18 +145,11 @@ class GUI:
         def loadVideo():
             files = os.listdir(folderPath)
             chosenFile = files[random.randint(0, len(files)-1)]
+            chosenFile = "testing vid.mp4"
 
             self.video(r"{}".format(folderPath + "\\" + chosenFile))
-            time.sleep(1)
 
-            delay = int(self.mediaPlayer.get_length()/1000) + 5 #make sure the mediaplayer has time to stop and start again
-
-            if self.launchTimeRange > delay:
-                a, b = delay, self.launchTimeRange
-            else:
-                a, b = delay, delay + 2
-
-            eventSchedule.enter(random.randint(a, b), 1, loadVideo)
+            eventSchedule.enter(random.randint(1, self.launchTimeRange), 1, loadVideo)
 
         a, b = arrangeBoundaries(5, self.launchTimeRange)
         eventSchedule.enter(random.randint(a, b), 1, loadVideo)
