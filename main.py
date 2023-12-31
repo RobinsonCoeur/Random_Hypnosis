@@ -1,8 +1,10 @@
 import os 
+import sys
 
 from pywinauto.findwindows    import find_window
 from pywinauto import mouse
 import win32gui 
+import win32con
 from ctypes import windll
 
 import keyboard
@@ -10,6 +12,7 @@ import pyWinhook as pyHook
 import random
 
 import vlc
+import pygame
 
 import webbrowser
 
@@ -25,23 +28,29 @@ class GUI:
     
     def __init__(self):
         self.root = CTk()
-        self.root.title("Hypnosis Computer Virus")
+        self.windowTitle = "Hypnosis Computer Virus"
+        self.root.title(self.windowTitle)
         self.root.geometry('380x420')
 
         self.taskBar = windll.user32.FindWindowA(b'Shell_TrayWnd', None)
         windll.user32.ShowWindow(self.taskBar, 9)
 
         self.mediaPlayer = vlc.MediaPlayer()
+        pygame.init()
 
         self.eventSchedule = sched.scheduler(time.time, time.sleep)
+        self.exitType = 0 #0 running, 1 video over, 2 forced
         self.run = True
         self.running = False
+        self.currentIdInQueue = 0
         
+        self.safetyTime = 30 #used to start another video min. 30 sec after forced exit
         self.launchTimeRange =  3600 #in seconds
         
         self.setupMenuFrame()
 
         self.root.after(50, self.checkFrameConditions) 
+        self.root.protocol("WM_DELETE_WINDOW", exit)
         self.root.mainloop()
     
     def loadVlcDownloadPage(self):
@@ -78,15 +87,19 @@ class GUI:
         
         menuFrame.buttonLaunch = CTkButton(master = menuFrame, text="Launch !", 
                                   command= lambda : self.launch(linkEntry))
-        menuFrame.buttonLaunch.place(relx = 0.5, rely = 0.4, anchor = CENTER)
+        menuFrame.buttonLaunch.place(relx = 0.5, rely = 0.3, anchor = CENTER)
 
         menuFrame.buttonVLC = CTkButton(master = menuFrame, text="Download VLC ?", 
                                   command= lambda : self.loadVlcDownloadPage())
         menuFrame.buttonVLC.place(relx = 0.5, rely = 0.5, anchor = CENTER)
 
-        menuFrame.buttonQuit = CTkButton(master = menuFrame, text="Exit", 
+        menuFrame.buttonQuit = CTkButton(master = menuFrame, text="Exit App", 
                                   command= lambda : self.exit())
         menuFrame.buttonQuit.place(relx = 0.5, rely = 0.6, anchor = CENTER)
+
+        menuFrame.buttonCloseVirus = CTkButton(master = menuFrame, text="Turn off the program", 
+                                  command= lambda : self.closeProgram())
+        menuFrame.buttonCloseVirus.place(relx = 0.5, rely = 0.4, anchor = CENTER)
 
         label = CTkLabel(menuFrame, width = 100, text = "Input max time between videos", fg_color = ("white", "#1c6ba3"), corner_radius=8)
         label.pack(side = BOTTOM)
@@ -103,12 +116,19 @@ class GUI:
 
         return
 
-    def exit(self):
+    def closeProgram(self):
         self.run = False
-        self.root.destroy()
+        try:
+            self.eventSchedule.cancel(self.currentIdInQueue)
+        except:
+            pass
         self.exitVideo()
 
         return
+
+    def exit(self):
+        self.closeProgram()
+        sys.exit()
 
     def launch(self, linkEntry):
 
@@ -117,6 +137,11 @@ class GUI:
 
         if not self.running:
             filepath = linkEntry.get()
+
+            id = find_window(title=self.windowTitle) 
+            mouse.move(coords=(-10000, 500))
+                
+            win32gui.ShowWindow(id, win32con.SW_MINIMIZE)
 
             t1=Thread(target=videoThread)
             t1.start()
@@ -127,11 +152,11 @@ class GUI:
         self.mediaPlayer.stop()
         windll.user32.ShowWindow(self.taskBar, 9)
         self.running = False
+        
 
     def blockKeys(self):
         def OnKeyboardEvent(event):
             if event.Key.lower() in ['tab','alt']:#Keys to block:
-                print("hello")
                 return False    # block these keys
     
             else:
@@ -150,6 +175,7 @@ class GUI:
 
         self.mediaPlayer.set_fullscreen(True)
         self.mediaPlayer.play()
+        self.exitType = 0
 
         start = time.time()
         time.sleep(0.8)
@@ -161,14 +187,16 @@ class GUI:
         win32gui.SetForegroundWindow(id)
         windll.user32.ShowWindow(self.taskBar, 0)
 
+        self.blockKeys()
+        
         while True:
-            self.blockKeys()
+            pygame.event.pump()
             if time.time() - start >= self.mediaPlayer.get_length()/1000 - 0.5:
-                print("over")
+                self.exitType = 1
                 self.exitVideo()
                 break
-            if keyboard.is_pressed("a"):
-                print("forced")
+            if keyboard.is_pressed("q"):
+                self.exitType = 2
                 self.exitVideo()
                 break
 
@@ -190,10 +218,13 @@ class GUI:
             self.video(r"{}".format(folderPath + "\\" + chosenFile))
 
             if self.run:
-                self.eventSchedule.enter(random.randint(1, self.launchTimeRange), 1, loadVideo)
-
+                if self.exitType == 1:
+                    self.currentIdInQueue = self.eventSchedule.enter(random.randint(1, self.launchTimeRange), 1, loadVideo)
+                if self.exitType == 2:
+                    self.currentIdInQueue = self.eventSchedule.enter(random.randint(self.safetyTime, self.launchTimeRange+self.safetyTime), 1, loadVideo)
+        
         a, b = arrangeBoundaries(5, self.launchTimeRange)
-        self.eventSchedule.enter(random.randint(a, b), 1, loadVideo)
+        self.currentIdInQueue = self.eventSchedule.enter(random.randint(a, b), 1, loadVideo)
         self.eventSchedule.run()    
     
 
