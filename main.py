@@ -1,4 +1,8 @@
 import os 
+from pywinauto.findwindows    import find_window
+from pywinauto import mouse
+import win32gui 
+
 import keyboard
 import random
 
@@ -91,15 +95,21 @@ class GUI:
         self.randomEvent(filepath)
 
     def video(self, file):
-        self.mediaPlayer.set_fullscreen(True)
         media = vlc.Media(file)
         self.mediaPlayer.set_media(media)
  
         def videoThread():
-            start = time.time()
-
+            self.mediaPlayer.set_fullscreen(True)
             self.mediaPlayer.play()
+
+            start = time.time()
             time.sleep(1)
+
+            id = find_window(title='VLC (Direct3D11 output)') 
+            mouse.move(coords=(-10000, 500))
+
+            win32gui.ShowWindow(id,5)
+            win32gui.SetForegroundWindow(id)
 
             while True:
                 if time.time() - start >= self.mediaPlayer.get_length()/1000 - 0.5:
