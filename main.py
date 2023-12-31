@@ -6,6 +6,7 @@ import win32gui
 from ctypes import windll
 
 import keyboard
+import pyWinhook as pyHook
 import random
 
 import vlc
@@ -24,13 +25,17 @@ class GUI:
     
     def __init__(self):
         self.root = CTk()
-        self.root.title("Playlist Creator")
+        self.root.title("Hypnosis Computer Virus")
         self.root.geometry('380x420')
 
         self.taskBar = windll.user32.FindWindowA(b'Shell_TrayWnd', None)
         windll.user32.ShowWindow(self.taskBar, 9)
 
         self.mediaPlayer = vlc.MediaPlayer()
+
+        self.eventSchedule = sched.scheduler(time.time, time.sleep)
+        self.run = True
+        self.running = False
         
         self.launchTimeRange =  3600 #in seconds
         
@@ -73,11 +78,15 @@ class GUI:
         
         menuFrame.buttonLaunch = CTkButton(master = menuFrame, text="Launch !", 
                                   command= lambda : self.launch(linkEntry))
-        menuFrame.buttonLaunch.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+        menuFrame.buttonLaunch.place(relx = 0.5, rely = 0.4, anchor = CENTER)
 
         menuFrame.buttonVLC = CTkButton(master = menuFrame, text="Download VLC ?", 
                                   command= lambda : self.loadVlcDownloadPage())
-        menuFrame.buttonVLC.place(relx = 0.5, rely = 0.6, anchor = CENTER)
+        menuFrame.buttonVLC.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+
+        menuFrame.buttonQuit = CTkButton(master = menuFrame, text="Exit", 
+                                  command= lambda : self.exit())
+        menuFrame.buttonQuit.place(relx = 0.5, rely = 0.6, anchor = CENTER)
 
         label = CTkLabel(menuFrame, width = 100, text = "Input max time between videos", fg_color = ("white", "#1c6ba3"), corner_radius=8)
         label.pack(side = BOTTOM)
@@ -94,18 +103,50 @@ class GUI:
 
         return
 
-    def launch(self, linkEntry):
-        filepath = linkEntry.get()
+    def exit(self):
+        self.run = False
         self.root.destroy()
-        self.randomEvent(filepath)
+        self.exitVideo()
+
+        return
+
+    def launch(self, linkEntry):
+
+        def videoThread():
+            self.randomEvent(filepath)
+
+        if not self.running:
+            filepath = linkEntry.get()
+
+            t1=Thread(target=videoThread)
+            t1.start()
+
+            self.running = True
+
+    def exitVideo(self):
+        self.mediaPlayer.stop()
+        windll.user32.ShowWindow(self.taskBar, 9)
+        self.running = False
+
+    def blockKeys(self):
+        def OnKeyboardEvent(event):
+            if event.Key.lower() in ['tab','alt']:#Keys to block:
+                print("hello")
+                return False    # block these keys
+    
+            else:
+            # return True to pass the event to other handlers
+                return True
+
+        hm = pyHook.HookManager()
+        # watch for all keyboard events
+        hm.KeyDown = OnKeyboardEvent
+        # set the hook
+        hm.HookKeyboard()
 
     def video(self, file):
         media = vlc.Media(file)
         self.mediaPlayer.set_media(media)
- 
-        def exitVideo():
-            self.mediaPlayer.stop()
-            windll.user32.ShowWindow(self.taskBar, 9)
 
         self.mediaPlayer.set_fullscreen(True)
         self.mediaPlayer.play()
@@ -121,18 +162,17 @@ class GUI:
         windll.user32.ShowWindow(self.taskBar, 0)
 
         while True:
+            self.blockKeys()
             if time.time() - start >= self.mediaPlayer.get_length()/1000 - 0.5:
                 print("over")
-                exitVideo()
+                self.exitVideo()
                 break
             if keyboard.is_pressed("a"):
                 print("forced")
-                exitVideo()
+                self.exitVideo()
                 break
 
     def randomEvent(self, folderPath):
-        eventSchedule = sched.scheduler(time.time, time.sleep)
-
         def arrangeBoundaries(val1, val2):
             if val1 > val2:
                 b = val1
@@ -149,11 +189,12 @@ class GUI:
 
             self.video(r"{}".format(folderPath + "\\" + chosenFile))
 
-            eventSchedule.enter(random.randint(1, self.launchTimeRange), 1, loadVideo)
+            if self.run:
+                self.eventSchedule.enter(random.randint(1, self.launchTimeRange), 1, loadVideo)
 
         a, b = arrangeBoundaries(5, self.launchTimeRange)
-        eventSchedule.enter(random.randint(a, b), 1, loadVideo)
-        eventSchedule.run()    
+        self.eventSchedule.enter(random.randint(a, b), 1, loadVideo)
+        self.eventSchedule.run()    
     
 
     def clearFrame(self, frame: CTkFrame):
