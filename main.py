@@ -43,7 +43,14 @@ class WindowsAccess:
                 
         win32gui.ShowWindow(id,5)
         win32gui.SetForegroundWindow(id)
-        windll.user32.ShowWindow(self.taskBar, 0)
+        windll.user32.ShowWindow(windowName, 0)
+
+    def minimizeWindow(self, windowName):
+        id = find_window(title=windowName) 
+        mouse.move(coords=(-10000, 500))
+                
+        win32gui.ShowWindow(id, win32con.SW_MINIMIZE)
+
 
 class Video:
     def __init__(self, filePath) -> None:
@@ -51,10 +58,15 @@ class Video:
         self.mediaPlayer = vlc.MediaPlayer()
         pygame.init()
 
+        self.exitType = 0 #0 running, 1 video over, 2 forced
+
         self.windowAccess = WindowsAccess()
         self.file = filePath
 
         pass
+
+    def getExitType(self):
+        return self.exitType
 
     def exitVideo(self):
         self.mediaPlayer.stop()
@@ -105,23 +117,48 @@ class Video:
 class Schedule:
     def __init__(self) -> None:
 
-        self.video = 0
+        self.eventSchedule = sched.scheduler(time.time, time.sleep)
+        self.video = ""
+        self.currentIdInQueue = 0
+        self.run = False
+
+        self.safetyTime = 30 #used to start another video min. 30 sec after forced exit
+        self.launchTimeRange =  3600 #in seconds
 
         pass
 
-    def randomVideosEvent(self, folderPath: str, safetyTime: int, launchTimeRange: int):
+    def getSafetyTime(self):
+        return self.safetyTime
+    
+    def setSafetyTime(self, newTime):
+        self.safetyTime = newTime
+
+    def getLaunchTimeRange(self):
+        return self.launchTimeRange
+    
+    def setLaunchTimeRange(self, newTime):
+        self.launchTimeRange = newTime
+
+    def cancelQueue(self):
+        self.eventSchedule.cancel(self.currentIdInQueue)
+
+    def setRunFlag(self, state):
+        self.run = state
+
+    def randomVideosEvent(self, folderPath: str):
         def loadVideo():
             files = os.listdir(folderPath)
             chosenFile = files[random.randint(0, len(files)-1)]
 
             video = Video(r"{}".format(folderPath + "\\" + chosenFile))
             video.launchVideo()
+            exitType = video.getExitType()
 
             if self.run:
-                if self.exitType == 1:
-                    self.currentIdInQueue = self.eventSchedule.enter(random.randint(1, launchTimeRange), 1, loadVideo)
-                if self.exitType == 2:
-                    self.currentIdInQueue = self.eventSchedule.enter(random.randint(safetyTime, launchTimeRange+safetyTime), 1, loadVideo)
+                if exitType == 1:
+                    self.currentIdInQueue = self.eventSchedule.enter(random.randint(1, self.launchTimeRange), 1, loadVideo)
+                if exitType == 2:
+                    self.currentIdInQueue = self.eventSchedule.enter(random.randint(self.safetyTime, self.launchTimeRange+self.safetyTime), 1, loadVideo)
         
         self.currentIdInQueue = self.eventSchedule.enter(random.randint(1, self.launchTimeRange), 1, loadVideo)
         self.eventSchedule.run()
@@ -134,22 +171,13 @@ class GUI:
         self.root.title(self.windowTitle)
         self.root.geometry('380x420')
 
-        self.taskBar = windll.user32.FindWindowA(b'Shell_TrayWnd', None)
-        windll.user32.ShowWindow(self.taskBar, 9)
+        self.scheduler = Schedule()
 
-        self.mediaPlayer = vlc.MediaPlayer()
-        pygame.init()
-
-        self.eventSchedule = sched.scheduler(time.time, time.sleep)
-        self.exitType = 0 #0 running, 1 video over, 2 forced
-        self.run = True
-        self.runningVideo = False
-        self.currentIdInQueue = 0
-        
-        self.safetyTime = 30 #used to start another video min. 30 sec after forced exit
-        self.launchTimeRange =  3600 #in seconds
+        self.runningSchedule = False
 
         self.userData = [] #pathToFile
+        self.launchTimeRange = 3600
+        self.pathValid = False
         
         self.setupMenuFrame()
 
@@ -163,20 +191,30 @@ class GUI:
     def createEntryInFrame(self, frame: CTkFrame, text: str = "", width: int = 100):
         entry = CTkEntry(frame, width = width)
         entry.insert(1, text) 
-        entry.pack()
         
         return entry
     
     def savePathToFiles(self):
-        self.pathToFiles = self.linkEntry.get()
-
         with open("save.csv", "w", newline='') as f:
             writer = csv.writer(f)
             writer.writerow("")
 
         return
 
+    def verifyPathValidity(self):
+        if os.path.exists(self.pathToFiles):
+            self.checkBoxPath.select()
+            self.checkBoxPath.configure(text="Path is valid")
+            self.pathValid = True
+        else:
+            self.checkBoxPath.deselect()
+            self.checkBoxPath.configure(text="Path not valid")
+            self.pathValid = False
+
     def checkFrameConditions(self):
+        self.pathToFiles = self.linkEntry.get()
+        self.verifyPathValidity()
+
         val = str(self.scale1.get()).split(".")
         hrs = val[0]
         inMin = int(val[1])
@@ -196,8 +234,17 @@ class GUI:
         set_appearance_mode("dark")
         menuFrame.pack(side="top", expand=True, fill="both")
 
-        self.linkEntry = self.createEntryInFrame(menuFrame, '"Path to your video files"', 210)
-        
+        #top frame
+        topFrame = CTkFrame(menuFrame, height = 40, width = 400, fg_color = "#2b2b2b", corner_radius=5)
+        topFrame.pack(side = TOP)
+
+        self.linkEntry = self.createEntryInFrame(topFrame, '"Path to your video files"', 210)
+        self.linkEntry.place(relx = 0.4, rely = 0.5, anchor = CENTER)
+
+        self.checkBoxPath = CTkCheckBox(topFrame, text="Path not valid", onvalue="on", offvalue="off", state = DISABLED, checkbox_width = 15, checkbox_height = 15)
+        self.checkBoxPath.place(relx = 0.85, rely = 0.5, anchor = CENTER)
+
+        #middle   
         menuFrame.buttonLaunch = CTkButton(master = menuFrame, text="Launch !", 
                                   command= lambda : self.launch())
         menuFrame.buttonLaunch.place(relx = 0.5, rely = 0.3, anchor = CENTER)
@@ -227,12 +274,23 @@ class GUI:
         self.scaleValue = CTkLabel(bottomFrame, width = 10, text = "0", fg_color = ("white", "#1c6ba3"), corner_radius= 5)
         self.scaleValue.place(relx = 0.80, rely = 0.5, anchor = CENTER)
 
+        #program status
+        rightFrame = CTkFrame(menuFrame, height = 40, width = 100, fg_color = "#2b2b2b", corner_radius=5)
+        rightFrame.pack(side = RIGHT)
+
+        self.checkBoxStatus = CTkCheckBox(rightFrame, text="Progam Off", onvalue="on", offvalue="off", state = DISABLED, checkbox_width = 21, checkbox_height = 21)
+        self.checkBoxStatus.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+
         return
 
     def closeProgram(self):
-        self.run = False
+        self.runningSchedule = False
+        self.scheduler.setRunFlag(False)
+
+        self.checkBoxStatus.deselect()
+        self.checkBoxStatus.configure(text="Progam Off")
         try:
-            self.eventSchedule.cancel(self.currentIdInQueue)
+            self.scheduler.cancelQueue()
         except:
             pass
 
@@ -245,95 +303,21 @@ class GUI:
     def launch(self):
 
         def videoThread():
-            self.randomEvent(self.userData[0])
+            self.scheduler.setLaunchTimeRange(self.launchTimeRange)
+            self.scheduler.randomVideosEvent(self.pathToFiles)
 
-        if not self.runningVideo:
-            id = find_window(title=self.windowTitle) 
-            mouse.move(coords=(-10000, 500))
-                
-            win32gui.ShowWindow(id, win32con.SW_MINIMIZE)
+        if not self.runningSchedule and self.pathValid:
+            winAccess = WindowsAccess()
+            winAccess.minimizeWindow(self.windowTitle)
+
+            self.checkBoxStatus.select()
+            self.checkBoxStatus.configure(text="Progam On")
 
             t1=Thread(target=videoThread)
             t1.start()
 
-            self.runningVideo = True
-
-    def exitVideo(self):
-        self.mediaPlayer.stop()
-        windll.user32.ShowWindow(self.taskBar, 9)
-        self.runningVideo = False
-        
-    def blockKeys(self):
-        def OnKeyboardEvent(event):
-            if event.Key.lower() in ['tab','alt']:#Keys to block:
-                return False    # block these keys
-    
-            else:
-            # return True to pass the event to other handlers
-                return True
-
-        hm = pyHook.HookManager()
-        # watch for all keyboard events
-        hm.KeyDown = OnKeyboardEvent
-        # set the hook
-        hm.HookKeyboard()
-
-    def video(self, file):
-        media = vlc.Media(file)
-        self.mediaPlayer.set_media(media)
-
-        self.mediaPlayer.set_fullscreen(True)
-        self.mediaPlayer.play()
-        self.exitType = 0
-
-        start = time.time()
-        time.sleep(0.8)
-
-        id = find_window(title='VLC (Direct3D11 output)') 
-        mouse.move(coords=(-10000, 500))
-                
-        win32gui.ShowWindow(id,5)
-        win32gui.SetForegroundWindow(id)
-        windll.user32.ShowWindow(self.taskBar, 0)
-
-        self.blockKeys()
-        
-        while True:
-            pygame.event.pump()
-            if time.time() - start >= self.mediaPlayer.get_length()/1000 - 0.5:
-                self.exitType = 1
-                self.exitVideo()
-                break
-            if keyboard.is_pressed("q"):
-                self.exitType = 2
-                self.exitVideo()
-                break
-
-    def randomEvent(self, folderPath):
-        def arrangeBoundaries(val1, val2):
-            if val1 > val2:
-                b = val1
-                a = val2
-            else:
-                a = val1
-                b = val2
-            return a, b
-
-        def loadVideo():
-            files = os.listdir(folderPath)
-            chosenFile = files[random.randint(0, len(files)-1)]
-
-            self.video(r"{}".format(folderPath + "\\" + chosenFile))
-
-            if self.run:
-                if self.exitType == 1:
-                    self.currentIdInQueue = self.eventSchedule.enter(random.randint(1, self.launchTimeRange), 1, loadVideo)
-                if self.exitType == 2:
-                    self.currentIdInQueue = self.eventSchedule.enter(random.randint(self.safetyTime, self.launchTimeRange+self.safetyTime), 1, loadVideo)
-        
-        a, b = arrangeBoundaries(5, self.launchTimeRange)
-        self.currentIdInQueue = self.eventSchedule.enter(random.randint(a, b), 1, loadVideo)
-        self.eventSchedule.run()    
+            self.scheduler.setRunFlag(True)
+            self.runningSchedule = True
     
 
     def clearFrame(self, frame: CTkFrame):
@@ -341,9 +325,5 @@ class GUI:
             widget.destroy()
             
         frame.pack_forget()
-
-    ##TESTS##
-    def testVideoLoading(self):
-        self.video(r"F:\Users\cyriletjulia\Documents\Loïc\Musique création\videos\boobs.mp4")
 
 gui = GUI() 
