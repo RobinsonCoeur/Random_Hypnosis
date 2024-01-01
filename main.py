@@ -163,27 +163,79 @@ class Schedule:
         self.currentIdInQueue = self.eventSchedule.enter(random.randint(1, self.launchTimeRange), 1, loadVideo)
         self.eventSchedule.run()
 
+class UserData:
+    def __init__(self, path: str = "", time: float = 2.50) -> None:
+
+        self.curDir = os.getcwd()
+
+        self.pathToFolder = path
+        self.timeRange = time
+        self.userDataStorage = [self.pathToFolder, self.timeRange]
+
+        pass 
+
+    def initSaveFile(self):
+        if not os.path.isfile(self.curDir + "\\save.csv"):
+            open(self.curDir + "\\save.csv", "w", newline='')
+
+    def getPathToFolder(self):
+        return self.pathToFolder
+    
+    def setPathToFolder(self, path: str):
+        self.getPathToFolder = path
+
+    def getTimeRange(self):
+        return self.pathToFolder
+    
+    def setTimeRange(self, time: float):
+        self.timeRange = time
+
+    def loadUserData(self):
+        with open(self.curDir+ "\\save.csv", "r") as f:
+            reader = csv.reader(f)
+            for row in reader:
+                self.userDataStorage = row
+
+            try:
+                self.setPathToFolder(self.userDataStorage[0])
+                self.setTimeRange(float(self.userDataStorage[1]))
+            except:
+                pass
+
+    def saveUserData(self):
+        with open("save.csv", "w", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(self.userData)
+
 class GUI:
     
     def __init__(self) -> None:
-        self.root = CTk()
-        self.windowTitle = "Hypnosis Computer Virus"
-        self.root.title(self.windowTitle)
-        self.root.geometry('380x420')
+        self.userData = UserData()
+        self.userData.initSaveFile()
+        self.userData.loadUserData()
+
+        self.bufferPath = ""
+        self.bufferTimerValue = 0
 
         self.scheduler = Schedule()
 
         self.runningSchedule = False
 
-        self.userData = [] #pathToFile
-        self.launchTimeRange = 3600
         self.pathValid = False
-        
+
+        self.root = CTk()
+        self.windowTitle = "Hypnosis Computer Virus"
+        self.root.title(self.windowTitle)
+        self.root.geometry('380x420')
+
         self.setupMenuFrame()
 
         self.root.after(50, self.checkFrameConditions) 
         self.root.protocol("WM_DELETE_WINDOW", exit)
+
         self.root.mainloop()
+
+        pass
     
     def loadVlcDownloadPage(self):
         webbrowser.open('https://get.videolan.org/vlc/3.0.11/win64/vlc-3.0.11-win64.exe') 
@@ -192,40 +244,48 @@ class GUI:
         entry = CTkEntry(frame, width = width)
         entry.insert(1, text) 
         
-        return entry
-    
-    def savePathToFiles(self):
-        with open("save.csv", "w", newline='') as f:
-            writer = csv.writer(f)
-            writer.writerow("")
+        return entry 
 
-        return
-
-    def verifyPathValidity(self):
-        if os.path.exists(self.pathToFiles):
+    def verifyPathValidity(self, path: str):
+        if os.path.exists(path):
             self.checkBoxPath.select()
             self.checkBoxPath.configure(text="Path is valid")
             self.pathValid = True
+
+            if self.bufferPath != path:
+                self.bufferPath = path
+                self.userData.setPathToFolder(path)
         else:
             self.checkBoxPath.deselect()
             self.checkBoxPath.configure(text="Path not valid")
             self.pathValid = False
 
-    def checkFrameConditions(self):
-        self.pathToFiles = self.linkEntry.get()
-        self.verifyPathValidity()
-
-        val = str(self.scale1.get()).split(".")
-        hrs = val[0]
-        inMin = int(val[1])
+    def updateSliderLabel(self, sliderValue):
+        valuesList = str(sliderValue).split(".")
+        hrs = valuesList[0]
+        inMin = int(valuesList[1])
 
         if inMin == 5:
             inMin = 50
 
         self.scaleValue.configure(text = hrs + " hr and " + str(inMin*60/100).split(".")[0] + " min")
-        self.root.after(50, self.checkFrameConditions)
 
-        self.launchTimeRange = int(self.scale1.get()*60*60) + 1
+        return
+
+    def checkFrameConditions(self):
+        pathToFiles = self.linkEntry.get()
+        self.verifyPathValidity(pathToFiles)
+
+        sliderValue = self.scale1.get()
+
+        if sliderValue != self.bufferTimerValue:
+            self.bufferTimerValue = sliderValue
+            self.userData.setTimeRange(sliderValue)
+
+        self.updateSliderLabel(sliderValue)
+        self.launchTimeRange = int(sliderValue*60*60) + 1
+
+        self.root.after(50, self.checkFrameConditions)
 
         return
 
@@ -297,6 +357,7 @@ class GUI:
         return
 
     def exit(self):
+        self.userData.saveUserData()
         self.closeProgram()
         sys.exit()
 
