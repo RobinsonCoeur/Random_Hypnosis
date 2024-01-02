@@ -15,23 +15,30 @@ from threading import *
 class GUI:
     
     def __init__(self) -> None:
-        self.userData = user.UserData(path = "Enter Your Folder Path Here")
+        self.userData = user.UserData(path = "Enter Your Folder Path Here", browser = "chrome")
         self.userData.initSaveFile()
         self.userData.loadUserData()
 
         self.bufferPath = ""
         self.bufferTimerValue = 0
+        self.bufferBrowser = "chrome"
 
         self.scheduler = sch.Schedule()
         self.video = None
 
         self.pathValid = False
 
+        self.browserList = ["Chrome", "Edge", "Opera", "Firefox"]
+
         self.root = CTk()
         self.windowTitle = "Hypnosis Computer Virus"
         self.root.after(201, lambda :self.root.iconbitmap(self.userData.getCurrentDir() + '\\myIcon.ico'))
         self.root.title(self.windowTitle)
         self.root.geometry('380x420')
+        self.frameIndex = 0 #0 menu, 1 settings
+
+        self.labelBgColor = "#3e3261"
+        self.labelRad = 25
 
         self.setupMenuFrame()
 
@@ -81,26 +88,41 @@ class GUI:
         return
 
     def checkFrameConditions(self):
-        pathToFiles = self.linkEntry.get()
-        self.verifyPathValidity(pathToFiles)
+        if (self.frameIndex == 0):
+            pathToFiles = self.linkEntry.get()
+            self.verifyPathValidity(pathToFiles)
 
-        sliderValue = self.scale1.get()
+            sliderValue = self.scale1.get()
 
-        if sliderValue != self.bufferTimerValue:
-            self.bufferTimerValue = sliderValue
-            self.userData.setTimeRange(sliderValue)
+            if sliderValue != self.bufferTimerValue:
+                self.bufferTimerValue = sliderValue
+                self.userData.setTimeRange(sliderValue)
 
-        self.updateSliderLabel(sliderValue)
-        self.launchTimeRange = int(sliderValue*60*60) + 1
+            self.updateSliderLabel(sliderValue)
+            self.launchTimeRange = int(sliderValue*60*60) + 1
+
+        if (self.frameIndex == 1):
+            if self.maxTimeEntry.get() != '':
+                self.userData.setMaxTime(int(self.maxTimeEntry.get()))
 
         self.root.after(50, self.checkFrameConditions)
 
         return
 
+    def setupOptionsGrid(self, masterFrame):
+        optionsFrame = CTkFrame(masterFrame, height = 40, width = 400, fg_color = "#2b2b2b", corner_radius=5)
+        optionsFrame.pack(side = TOP)
+
+        optionsFrame.buttonLaunch = CTkButton(master = optionsFrame, text="Settings", 
+                                  command= lambda : self.setupSettingsFrame(optionsFrame.master), width = 100, height = 19)
+        optionsFrame.buttonLaunch.place(relx = 0.15, rely = 0.5, anchor = CENTER)
+
     def setupMenuFrame(self) -> None:
         menuFrame = CTkFrame(self.root)
         set_appearance_mode("dark")
         menuFrame.pack(side="top", expand=True, fill="both")
+
+        self.setupOptionsGrid(menuFrame)
 
         #top frame
         topFrame = CTkFrame(menuFrame, height = 40, width = 400, fg_color = "#2b2b2b", corner_radius=5)
@@ -129,18 +151,19 @@ class GUI:
                                   command= lambda : self.closeProgram())
         menuFrame.buttonCloseVirus.place(relx = 0.5, rely = 0.4, anchor = CENTER)
 
-        label = CTkLabel(menuFrame, width = 100, text = "Input max time between videos", fg_color = ("white", "#1c6ba3"), corner_radius=8)
+        label = CTkLabel(menuFrame, width = 100, text = "Input max time between videos", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
         label.pack(side = BOTTOM)
 
         #time input
         bottomFrame = CTkFrame(menuFrame, height = 40, width = 350, fg_color = "#2b2b2b", corner_radius=5)
         bottomFrame.pack(side = BOTTOM)
 
-        self.scale1 = CTkSlider(bottomFrame, from_= 0, to=5, orientation="horizontal", number_of_steps = 20)
+        maxTime = self.userData.getMaxTime()
+        self.scale1 = CTkSlider(bottomFrame, from_= 0, to=maxTime, orientation="horizontal", number_of_steps = maxTime*4)
         self.scale1.set(self.userData.getTimeRange())
         self.scale1.place(relx = 0.3, rely = 0.5, anchor = CENTER)
 
-        self.scaleValue = CTkLabel(bottomFrame, width = 10, text = "0", fg_color = ("white", "#1c6ba3"), corner_radius= 5)
+        self.scaleValue = CTkLabel(bottomFrame, width = 10, text = "0", fg_color = ("white", self.labelBgColor), corner_radius= self.labelRad)
         self.scaleValue.place(relx = 0.80, rely = 0.5, anchor = CENTER)
 
         #program status
@@ -152,14 +175,51 @@ class GUI:
 
         return
 
+    def setupSettingsFrame(self, previousFrame):
+        self.frameIndex = 1
+        self.clearFrame(previousFrame)
+
+        settingsFrame = CTkFrame(self.root)
+        set_appearance_mode("dark")
+        settingsFrame.pack(side="top", expand=True, fill="both")  
+
+        muteLabel = CTkLabel(settingsFrame, width = 100, text = "Browser to mute", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
+        muteLabel.place(relx = 0.5, rely = 0.1, anchor = CENTER)
+
+        browser = StringVar(value="Chrome")
+        settingsFrame.browserSelection = CTkOptionMenu(master = settingsFrame, values = self.browserList, command= self.userData.setUserBrowser, variable = browser)
+        settingsFrame.browserSelection.place(relx = 0.5, rely = 0.2, anchor = CENTER)
+        
+        for browser in self.browserList: 
+            if (browser.lower() == self.userData.getUserBrowser()):
+                settingsFrame.browserSelection.set(browser)
+
+        muteLabel = CTkLabel(settingsFrame, width = 100, text = "Max time slider value", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
+        muteLabel.place(relx = 0.5, rely = 0.35, anchor = CENTER)
+
+        self.maxTimeEntry = self.createEntryInFrame(settingsFrame, str(self.userData.getMaxTime()), 50)
+        self.maxTimeEntry.place(relx = 0.5, rely = 0.45, anchor = CENTER)
+
+        settingsFrame.leaveButton = CTkButton(master = settingsFrame, text="Exit", 
+                                  command= lambda : self.returnToMenu(settingsFrame), width = 70, height = 15)
+        settingsFrame.leaveButton.place(relx = 0.5, rely = 0.9, anchor = CENTER)
+
+        return
+    
+    def returnToMenu(self, previousFrame):
+        self.frameIndex = 0
+        self.clearFrame(previousFrame)
+        self.setupMenuFrame()
+
     def closeProgram(self):
         self.scheduler.setRunFlag(False)
 
         if self.video != None:
             self.video.exitVideo()
 
-        self.checkBoxStatus.deselect()
-        self.checkBoxStatus.configure(text="Progam Off")
+        if(self.frameIndex == 0):
+            self.checkBoxStatus.deselect()
+            self.checkBoxStatus.configure(text="Progam Off")
 
         try:
             self.scheduler.cancelQueue()
@@ -177,7 +237,7 @@ class GUI:
 
         def videoThread():
             self.scheduler.setLaunchTimeRange(self.launchTimeRange)
-            self.scheduler.randomVideosEvent(self.userData.getPathToFolder())
+            self.scheduler.randomVideosEvent(self.userData.getUserBrowser(), self.userData.getPathToFolder())
 
         if not self.scheduler.getRunFlag() and self.pathValid:
             winAccess = win.WindowsAccess()

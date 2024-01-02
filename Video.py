@@ -8,7 +8,7 @@ import pyWinhook as pyHook
 import WindowsAccess as win
 
 class Video:
-    def __init__(self, filePath) -> None:
+    def __init__(self, filePath, userBrowser: str) -> None:
 
         self.mediaPlayer = vlc.MediaPlayer()
         pygame.init()
@@ -17,6 +17,7 @@ class Video:
 
         self.windowAccess = win.WindowsAccess()
         self.file = filePath
+        self.browser = userBrowser
 
         pass
 
@@ -47,7 +48,12 @@ class Video:
         media = vlc.Media(self.file)
         self.mediaPlayer.set_media(media)
 
-        self.windowAccess.toggleMuteBrowser("opera.exe", True)
+        if (self.browser == "edge"):
+            exeName = "msedge.exe"
+        else:
+            exeName = self.browser + ".exe"
+            
+        self.windowAccess.toggleMuteBrowser(exeName, True)
 
         self.mediaPlayer.set_fullscreen(True)
         self.mediaPlayer.play()

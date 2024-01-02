@@ -3,6 +3,7 @@ import time
 import random
 import os 
 import Video as vid
+import UserData as user
 
 class Schedule:
     def __init__(self) -> None:
@@ -41,12 +42,12 @@ class Schedule:
     def getRunFlag(self):
         return self.run
 
-    def randomVideosEvent(self, folderPath: str):
+    def randomVideosEvent(self, userBrowser: str, folderPath: str):
         def loadVideo():
             files = os.listdir(folderPath)
             chosenFile = files[random.randint(0, len(files)-1)]
 
-            video = vid.Video(r"{}".format(folderPath + "\\" + chosenFile))
+            video = vid.Video(r"{}".format(folderPath + "\\" + chosenFile), userBrowser)
             video.launchVideo()
             exitType = video.getExitType()
 

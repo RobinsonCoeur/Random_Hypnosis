@@ -41,7 +41,7 @@ class WindowsAccess:
                 
         win32gui.ShowWindow(id, win32con.SW_MINIMIZE)
 
-    def toggleMuteBrowser(self, browserName, mute: bool = True):
+    def toggleMuteBrowser(self, browserName: str = "chrome.exe", mute: bool = True):
         idList = []
         for item in psutil.process_iter():
             if item.name() == browserName:
@@ -51,7 +51,6 @@ class WindowsAccess:
         for session in sessions:
             for id in idList:
                 if session.Process and session.Process.pid == id:
-                    print("hi")
                     session.SimpleAudioVolume.SetMute(mute, None)
         
 #win = WindowsAccess()
