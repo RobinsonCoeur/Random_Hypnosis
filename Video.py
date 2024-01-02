@@ -25,6 +25,7 @@ class Video:
 
     def exitVideo(self):
         self.mediaPlayer.stop()
+        self.windowAccess.toggleMuteBrowser("opera.exe", False)
         self.windowAccess.showTaskBar()
         
     def blockKeys(self):
@@ -46,6 +47,8 @@ class Video:
         media = vlc.Media(self.file)
         self.mediaPlayer.set_media(media)
 
+        self.windowAccess.toggleMuteBrowser("opera.exe", True)
+
         self.mediaPlayer.set_fullscreen(True)
         self.mediaPlayer.play()
         self.exitType = 0
@@ -53,7 +56,16 @@ class Video:
         start = time.time()
         time.sleep(1)
 
-        self.windowAccess.bringWindowToForeground('VLC (Direct3D11 output)')
+        try:
+            self.windowAccess.bringWindowToForeground('VLC (Direct3D11 output)')
+        except:
+            pass
+
+        try:
+            self.windowAccess.minimizeWindow("Picture in Picture")
+        except:
+            pass
+        
         self.windowAccess.hideTaskBar()
 
         self.blockKeys()

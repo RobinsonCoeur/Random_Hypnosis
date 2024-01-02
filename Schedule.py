@@ -38,6 +38,9 @@ class Schedule:
     def setRunFlag(self, state):
         self.run = state
 
+    def getRunFlag(self):
+        return self.run
+
     def randomVideosEvent(self, folderPath: str):
         def loadVideo():
             files = os.listdir(folderPath)

@@ -11,7 +11,7 @@ from customtkinter import *
 from tkinter import *
 
 from threading import *
-#q
+#qqqqqq
 class GUI:
     
     def __init__(self) -> None:
@@ -24,8 +24,6 @@ class GUI:
 
         self.scheduler = sch.Schedule()
         self.video = None
-
-        self.runningSchedule = False
 
         self.pathValid = False
 
@@ -155,7 +153,6 @@ class GUI:
         return
 
     def closeProgram(self):
-        self.runningSchedule = False
         self.scheduler.setRunFlag(False)
 
         if self.video != None:
@@ -168,12 +165,11 @@ class GUI:
             self.scheduler.cancelQueue()
         except:
             pass
-        print("done turning off program")
         return
 
     def exit(self):
         self.userData.saveUserData()
-        if not self.runningSchedule:
+        if not self.scheduler.getRunFlag():
             self.closeProgram()
         sys.exit()
 
@@ -183,7 +179,7 @@ class GUI:
             self.scheduler.setLaunchTimeRange(self.launchTimeRange)
             self.scheduler.randomVideosEvent(self.userData.getPathToFolder())
 
-        if not self.runningSchedule and self.pathValid:
+        if not self.scheduler.getRunFlag() and self.pathValid:
             winAccess = win.WindowsAccess()
             winAccess.minimizeWindow(self.windowTitle)
 
@@ -195,9 +191,7 @@ class GUI:
             t1.start()
 
             self.scheduler.setRunFlag(True)
-            self.runningSchedule = True
     
-
     def clearFrame(self, frame: CTkFrame):
         for widget in frame.winfo_children():
             widget.destroy()
