@@ -43,7 +43,6 @@ class WindowsAccess:
                 
         win32gui.ShowWindow(id,5)
         win32gui.SetForegroundWindow(id)
-        windll.user32.ShowWindow(windowName, 0)
 
     def minimizeWindow(self, windowName):
         id = find_window(title=windowName) 
@@ -139,6 +138,9 @@ class Schedule:
     def setLaunchTimeRange(self, newTime):
         self.launchTimeRange = newTime
 
+    def getVideoClass(self):
+        return self.video
+
     def cancelQueue(self):
         self.eventSchedule.cancel(self.currentIdInQueue)
 
@@ -182,13 +184,15 @@ class UserData:
         return self.pathToFolder
     
     def setPathToFolder(self, path: str):
-        self.getPathToFolder = path
+        self.pathToFolder = path
+        self.userDataStorage[0] = self.pathToFolder
 
     def getTimeRange(self):
-        return self.pathToFolder
+        return self.timeRange
     
     def setTimeRange(self, time: float):
         self.timeRange = time
+        self.userDataStorage[1] = self.timeRange
 
     def loadUserData(self):
         with open(self.curDir+ "\\save.csv", "r") as f:
@@ -205,12 +209,12 @@ class UserData:
     def saveUserData(self):
         with open("save.csv", "w", newline='') as f:
             writer = csv.writer(f)
-            writer.writerow(self.userData)
+            writer.writerow(self.userDataStorage)
 
 class GUI:
     
     def __init__(self) -> None:
-        self.userData = UserData()
+        self.userData = UserData(path = "Enter Your Folder Path Here")
         self.userData.initSaveFile()
         self.userData.loadUserData()
 
@@ -218,6 +222,7 @@ class GUI:
         self.bufferTimerValue = 0
 
         self.scheduler = Schedule()
+        self.video = None
 
         self.runningSchedule = False
 
@@ -231,7 +236,7 @@ class GUI:
         self.setupMenuFrame()
 
         self.root.after(50, self.checkFrameConditions) 
-        self.root.protocol("WM_DELETE_WINDOW", exit)
+        self.root.protocol("WM_DELETE_WINDOW", self.exit)
 
         self.root.mainloop()
 
@@ -298,7 +303,7 @@ class GUI:
         topFrame = CTkFrame(menuFrame, height = 40, width = 400, fg_color = "#2b2b2b", corner_radius=5)
         topFrame.pack(side = TOP)
 
-        self.linkEntry = self.createEntryInFrame(topFrame, '"Path to your video files"', 210)
+        self.linkEntry = self.createEntryInFrame(topFrame, str(self.userData.getPathToFolder()), 210)
         self.linkEntry.place(relx = 0.4, rely = 0.5, anchor = CENTER)
 
         self.checkBoxPath = CTkCheckBox(topFrame, text="Path not valid", onvalue="on", offvalue="off", state = DISABLED, checkbox_width = 15, checkbox_height = 15)
@@ -329,6 +334,7 @@ class GUI:
         bottomFrame.pack(side = BOTTOM)
 
         self.scale1 = CTkSlider(bottomFrame, from_= 0, to=5, orientation="horizontal", number_of_steps = 20)
+        self.scale1.set(self.userData.getTimeRange())
         self.scale1.place(relx = 0.3, rely = 0.5, anchor = CENTER)
 
         self.scaleValue = CTkLabel(bottomFrame, width = 10, text = "0", fg_color = ("white", "#1c6ba3"), corner_radius= 5)
@@ -346,6 +352,9 @@ class GUI:
     def closeProgram(self):
         self.runningSchedule = False
         self.scheduler.setRunFlag(False)
+
+        if self.video != None:
+            self.video.exitVideo()
 
         self.checkBoxStatus.deselect()
         self.checkBoxStatus.configure(text="Progam Off")
@@ -365,7 +374,7 @@ class GUI:
 
         def videoThread():
             self.scheduler.setLaunchTimeRange(self.launchTimeRange)
-            self.scheduler.randomVideosEvent(self.pathToFiles)
+            self.scheduler.randomVideosEvent(self.userData.getPathToFolder())
 
         if not self.runningSchedule and self.pathValid:
             winAccess = WindowsAccess()
