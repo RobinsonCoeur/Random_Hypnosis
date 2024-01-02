@@ -183,7 +183,7 @@ class GUI:
         set_appearance_mode("dark")
         settingsFrame.pack(side="top", expand=True, fill="both")  
 
-        muteLabel = CTkLabel(settingsFrame, width = 100, text = "Browser to mute", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
+        muteLabel = CTkLabel(settingsFrame, width = 120, text = "Browser to mute when a video plays", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
         muteLabel.place(relx = 0.5, rely = 0.1, anchor = CENTER)
 
         browser = StringVar(value="Chrome")
