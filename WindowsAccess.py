@@ -44,7 +44,7 @@ class WindowsAccess:
     def toggleMuteAllApps(self, mute: bool):
         idList = []
         for item in psutil.process_iter():
-            if item.name() != 'python3.10.exe':
+            if item.name() != 'python3.10.exe' and item.name() != 'Random Hypnosis Program.exe':
                 idList.append(item.pid)
 
         sessions = AudioUtilities.GetAllSessions()
