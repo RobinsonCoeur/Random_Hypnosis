@@ -13,6 +13,8 @@ class Video:
         self.mediaPlayer = vlc.MediaPlayer()
         pygame.init()
 
+        self.hm = pyHook.HookManager()
+
         self.exitType = 0 #0 running, 1 video over, 2 forced
 
         self.windowAccess = win.WindowsAccess()
@@ -26,6 +28,8 @@ class Video:
 
     def exitVideo(self):
         self.mediaPlayer.stop()
+        pygame.quit()
+        self.hm.UnhookKeyboard()
         self.windowAccess.toggleMuteBrowser("opera.exe", False)
         self.windowAccess.showTaskBar()
         
@@ -38,11 +42,10 @@ class Video:
             # return True to pass the event to other handlers
                 return True
 
-        hm = pyHook.HookManager()
         # watch for all keyboard events
-        hm.KeyDown = OnKeyboardEvent
+        self.hm.KeyDown = OnKeyboardEvent
         # set the hook
-        hm.HookKeyboard()
+        self.hm.HookKeyboard()
 
     def launchVideo(self):
         media = vlc.Media(self.file)
