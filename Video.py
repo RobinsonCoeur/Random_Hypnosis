@@ -2,13 +2,16 @@ import vlc
 import time
 import keyboard
 
+import requests
+from bs4 import BeautifulSoup
+
 import pygame
 import pyWinhook as pyHook
 
 import WindowsAccess as win
 
 class Video:
-    def __init__(self, filePath) -> None:
+    def __init__(self, linkToVideo, localFile: bool = True, website: str = "") -> None:
 
         self.mediaPlayer = vlc.MediaPlayer()
         pygame.init()
@@ -18,7 +21,13 @@ class Video:
         self.exitType = 0 #0 running, 1 video over, 2 forced
 
         self.windowAccess = win.WindowsAccess()
-        self.file = filePath
+
+        self.websitesList = ["hypnotube", "xhamster"]
+
+        if localFile:
+            self.file = linkToVideo
+        else:
+            self.file = self.extractVideoFromLink(linkToVideo, website)
 
         pass
 
@@ -45,6 +54,29 @@ class Video:
         self.hm.KeyDown = OnKeyboardEvent
         # set the hook
         self.hm.HookKeyboard()
+
+    def extractVideoFromLink(self, link: str, website: str):
+        file = ""
+        #extract file like https://cdn.hypnotube.com/videos/5/f/d/5/d/5fd5d34293d6a.mp4 from link html
+        
+        if website in self.websitesList:
+            page = requests.get(link)
+            htmlData = BeautifulSoup(page.content, "html.parser")
+
+            if website == "hypnotube":
+                videoSpace = htmlData.find_all("div", class_ = "inner-stage")
+                for item in videoSpace:
+                    file = item.find_all("source")[0]["src"]
+
+            elif website == "xhamster":
+                videoSpace = htmlData.find_all("div", id = "player-container")
+                for item in videoSpace:
+                    file = item.find_all("video")
+                    print(file)
+                    
+
+        return file
+        
 
     def launchVideo(self):
         media = vlc.Media(self.file)
@@ -83,3 +115,5 @@ class Video:
                 self.exitType = 2
                 self.exitVideo()
                 break
+
+vid = Video("https://xhamster.com/videos/i-will-turn-you-into-a-mindless-cocksucker-hypnosis-master-11530939", False, "xhamster")
