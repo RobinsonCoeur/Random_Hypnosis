@@ -18,12 +18,6 @@ class UserData:
     def getMaxTime(self):
         return self.maxTime
 
-    def setUserBrowser(self, browser: str):
-        self.browser = browser.lower()
-    
-    def getUserBrowser(self):
-        return self.browser
-
     def getCurrentDir(self):
         return self.curDir
 

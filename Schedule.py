@@ -42,12 +42,12 @@ class Schedule:
     def getRunFlag(self):
         return self.run
 
-    def randomVideosEvent(self, userBrowser: str, folderPath: str):
+    def randomVideosEvent(self, folderPath: str):
         def loadVideo():
             files = os.listdir(folderPath)
             chosenFile = files[random.randint(0, len(files)-1)]
 
-            video = vid.Video(r"{}".format(folderPath + "\\" + chosenFile), userBrowser)
+            video = vid.Video(r"{}".format(folderPath + "\\" + chosenFile))
             video.launchVideo()
             exitType = video.getExitType()
 

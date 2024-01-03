@@ -21,7 +21,6 @@ class GUI:
 
         self.bufferPath = ""
         self.bufferTimerValue = 0
-        self.bufferBrowser = "chrome"
 
         self.scheduler = sch.Schedule()
         self.video = None
@@ -224,7 +223,7 @@ class GUI:
 
         def videoThread():
             self.scheduler.setLaunchTimeRange(self.launchTimeRange)
-            self.scheduler.randomVideosEvent(self.userData.getUserBrowser(), self.userData.getPathToFolder())
+            self.scheduler.randomVideosEvent(self.userData.getPathToFolder())
 
         if not self.scheduler.getRunFlag() and self.pathValid:
             winAccess = win.WindowsAccess()
