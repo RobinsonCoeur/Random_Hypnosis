@@ -27,10 +27,10 @@ class Video:
         return self.exitType
 
     def exitVideo(self):
+        self.windowAccess.toggleMuteAllApps (False)
         self.mediaPlayer.stop()
         pygame.quit()
         self.hm.UnhookKeyboard()
-        self.windowAccess.toggleMuteBrowser("opera.exe", False)
         self.windowAccess.showTaskBar()
         
     def blockKeys(self):
@@ -55,15 +55,15 @@ class Video:
             exeName = "msedge.exe"
         else:
             exeName = self.browser + ".exe"
-            
-        self.windowAccess.toggleMuteBrowser(exeName, True)
 
         self.mediaPlayer.set_fullscreen(True)
         self.mediaPlayer.play()
         self.exitType = 0
 
         start = time.time()
-        time.sleep(1)
+        time.sleep(0.8)
+
+        self.windowAccess.toggleMuteAllApps(True)
 
         try:
             self.windowAccess.bringWindowToForeground('VLC (Direct3D11 output)')

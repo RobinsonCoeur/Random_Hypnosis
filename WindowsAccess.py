@@ -41,10 +41,10 @@ class WindowsAccess:
                 
         win32gui.ShowWindow(id, win32con.SW_MINIMIZE)
 
-    def toggleMuteBrowser(self, browserName: str = "chrome.exe", mute: bool = True):
+    def toggleMuteAllApps(self, mute: bool):
         idList = []
         for item in psutil.process_iter():
-            if item.name() == browserName:
+            if item.name() != 'python3.10.exe':
                 idList.append(item.pid)
 
         sessions = AudioUtilities.GetAllSessions()

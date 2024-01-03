@@ -11,7 +11,7 @@ from customtkinter import *
 from tkinter import *
 
 from threading import *
-#qqqqqqqq
+#qqqqqqqqqq q
 class GUI:
     
     def __init__(self) -> None:
