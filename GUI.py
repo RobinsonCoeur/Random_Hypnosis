@@ -15,7 +15,7 @@ from threading import *
 class GUI:
     
     def __init__(self) -> None:
-        self.userData = user.UserData(path = "Enter Your Folder Path Here", browser = "chrome")
+        self.userData = user.UserData()
         self.userData.initSaveFile()
         self.userData.loadUserData()
 
@@ -27,8 +27,6 @@ class GUI:
         self.video = None
 
         self.pathValid = False
-
-        self.browserList = ["Chrome", "Edge", "Opera", "Firefox"]
 
         self.root = CTk()
         self.windowTitle = "Hypnosis Computer Virus"
@@ -183,19 +181,8 @@ class GUI:
         set_appearance_mode("dark")
         settingsFrame.pack(side="top", expand=True, fill="both")  
 
-        muteLabel = CTkLabel(settingsFrame, width = 120, text = "Browser to mute when a video plays", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
-        muteLabel.place(relx = 0.5, rely = 0.1, anchor = CENTER)
-
-        browser = StringVar(value="Chrome")
-        settingsFrame.browserSelection = CTkOptionMenu(master = settingsFrame, values = self.browserList, command= self.userData.setUserBrowser, variable = browser)
-        settingsFrame.browserSelection.place(relx = 0.5, rely = 0.2, anchor = CENTER)
-        
-        for browser in self.browserList: 
-            if (browser.lower() == self.userData.getUserBrowser()):
-                settingsFrame.browserSelection.set(browser)
-
-        muteLabel = CTkLabel(settingsFrame, width = 100, text = "Max time slider value", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
-        muteLabel.place(relx = 0.5, rely = 0.35, anchor = CENTER)
+        maxLabel = CTkLabel(settingsFrame, width = 100, text = "Max time slider value", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
+        maxLabel.place(relx = 0.5, rely = 0.35, anchor = CENTER)
 
         self.maxTimeEntry = self.createEntryInFrame(settingsFrame, str(self.userData.getMaxTime()), 50)
         self.maxTimeEntry.place(relx = 0.5, rely = 0.45, anchor = CENTER)
