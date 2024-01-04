@@ -49,14 +49,20 @@ class Schedule:
             chosenFile = files[random.randint(0, len(files)-1)]
             path = r"{}".format(folderPath + "\\" + chosenFile)
 
+            print(mediaType)
+
             if "mp3" in chosenFile.split(".") and (mediaType == "audio" or mediaType == "both"):
                 audio = aud.Audio(path)
                 audio.launchAudio()
                 exitType = audio.getExitType()
+
             elif mediaType == "video" or mediaType == "both":
                 video = vid.Video(path)
                 video.launchVideo()
                 exitType = video.getExitType()
+            
+            else:
+                exitType = 3
 
             if self.run:
                 if exitType == 1:

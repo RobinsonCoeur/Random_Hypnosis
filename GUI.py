@@ -198,7 +198,7 @@ class GUI:
                 else:
                     self.userData.setMediaType("video")
             else:
-                if checkboxAudio.get() == "off":
+                if checkboxAudio.get() == "on":
                     self.userData.setMediaType("audio")
                 else:
                     self.userData.setMediaType("none")
@@ -212,7 +212,7 @@ class GUI:
                 else:
                     self.userData.setMediaType("audio")
             else:
-                if checkboxVideo.get() == "off":
+                if checkboxVideo.get() == "on":
                     self.userData.setMediaType("video")
                 else:
                     self.userData.setMediaType("none")
@@ -220,7 +220,6 @@ class GUI:
             pass
 
         media = self.userData.getMediaType()
-        print(media)
 
         mediaLabel = CTkLabel(mediaChoiceFrame, width = 100, text = "Select what you want to play", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
         mediaLabel.place(relx = 0.5, rely = 0.2, anchor = CENTER)
@@ -230,7 +229,7 @@ class GUI:
                                      variable=check_var, onvalue="on", offvalue="off", checkbox_width = 21, checkbox_height = 21)
         checkboxVideo.place(relx = 0.5, rely = 0.5, anchor = CENTER)
 
-        if media == "audio":
+        if media == "audio" or media == "none":
             checkboxVideo.deselect()
         
         check_var = StringVar(value="on")
@@ -238,7 +237,7 @@ class GUI:
                                      variable=check_var, onvalue="on", offvalue="off", checkbox_width = 21, checkbox_height = 21)
         checkboxAudio.place(relx = 0.5, rely = 0.8, anchor = CENTER)
 
-        if media == "video":
+        if media == "video" or media == "none":
             checkboxAudio.deselect()
 
         settingsFrame.leaveButton = CTkButton(master = settingsFrame, text="Exit", 
@@ -277,8 +276,8 @@ class GUI:
     def launch(self):
 
         def videoThread():
-            self.scheduler.setLaunchTimeRange(self.launchTimeRange, self.userData.getMediaType())
-            self.scheduler.randomVideosEvent(self.userData.getPathToFolder())
+            self.scheduler.setLaunchTimeRange(self.launchTimeRange)
+            self.scheduler.randomVideosEvent(self.userData.getPathToFolder(), self.userData.getMediaType())
 
         if not self.scheduler.getRunFlag() and self.pathValid:
             winAccess = win.WindowsAccess()

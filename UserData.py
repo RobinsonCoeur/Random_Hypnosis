@@ -54,7 +54,7 @@ class UserData:
                 self.setPathToFolder(userDataStorage[0])
                 self.setTimeRange(float(userDataStorage[1]))
                 self.setMaxTime(int(userDataStorage[2]))
-                self.mediaType(userDataStorage[3])
+                self.setMediaType(userDataStorage[3])
             except:
                 pass
 
