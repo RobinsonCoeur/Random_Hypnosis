@@ -115,5 +115,6 @@ class Video:
                 self.exitType = 2
                 self.exitVideo()
                 break
+            time.sleep(0.1)
 
-vid = Video("https://xhamster.com/videos/i-will-turn-you-into-a-mindless-cocksucker-hypnosis-master-11530939", False, "xhamster")
+#vid = Video("https://xhamster.com/videos/i-will-turn-you-into-a-mindless-cocksucker-hypnosis-master-11530939", False, "xhamster")

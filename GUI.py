@@ -11,7 +11,7 @@ from customtkinter import *
 from tkinter import *
 
 from threading import *
-#qqqqqqqqqq q
+#qqqqqqqqqqqqq
 class GUI:
     
     def __init__(self) -> None:
@@ -180,11 +180,66 @@ class GUI:
         set_appearance_mode("dark")
         settingsFrame.pack(side="top", expand=True, fill="both")  
 
-        maxLabel = CTkLabel(settingsFrame, width = 100, text = "Max time slider value", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
+        #max time
+        maxLabel = CTkLabel(settingsFrame, width = 100, text = "Max time (hrs) slider value", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
         maxLabel.place(relx = 0.5, rely = 0.35, anchor = CENTER)
 
         self.maxTimeEntry = self.createEntryInFrame(settingsFrame, str(self.userData.getMaxTime()), 50)
         self.maxTimeEntry.place(relx = 0.5, rely = 0.45, anchor = CENTER)
+
+        #media type
+        mediaChoiceFrame = CTkFrame(settingsFrame, height = 100, width = 300, fg_color = "#2b2b2b", corner_radius=5)
+        mediaChoiceFrame.pack(side = TOP)
+
+        def checkboxVideoEvent():
+            if checkboxVideo.get() == "on":
+                if checkboxAudio.get() == "on":
+                    self.userData.setMediaType("both")
+                else:
+                    self.userData.setMediaType("video")
+            else:
+                if checkboxAudio.get() == "off":
+                    self.userData.setMediaType("audio")
+                else:
+                    self.userData.setMediaType("none")
+
+            pass
+
+        def checkboxAudioEvent():
+            if checkboxAudio.get() == "on":
+                if checkboxVideo.get() == "on":
+                    self.userData.setMediaType("both")
+                else:
+                    self.userData.setMediaType("audio")
+            else:
+                if checkboxVideo.get() == "off":
+                    self.userData.setMediaType("video")
+                else:
+                    self.userData.setMediaType("none")
+
+            pass
+
+        media = self.userData.getMediaType()
+        print(media)
+
+        mediaLabel = CTkLabel(mediaChoiceFrame, width = 100, text = "Select what you want to play", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
+        mediaLabel.place(relx = 0.5, rely = 0.2, anchor = CENTER)
+
+        check_var = StringVar(value="on")
+        checkboxVideo = CTkCheckBox(mediaChoiceFrame, text="Video", command=checkboxVideoEvent,
+                                     variable=check_var, onvalue="on", offvalue="off", checkbox_width = 21, checkbox_height = 21)
+        checkboxVideo.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+
+        if media == "audio":
+            checkboxVideo.deselect()
+        
+        check_var = StringVar(value="on")
+        checkboxAudio = CTkCheckBox(mediaChoiceFrame, text="Audio", command=checkboxAudioEvent,
+                                     variable=check_var, onvalue="on", offvalue="off", checkbox_width = 21, checkbox_height = 21)
+        checkboxAudio.place(relx = 0.5, rely = 0.8, anchor = CENTER)
+
+        if media == "video":
+            checkboxAudio.deselect()
 
         settingsFrame.leaveButton = CTkButton(master = settingsFrame, text="Exit", 
                                   command= lambda : self.returnToMenu(settingsFrame), width = 70, height = 15)
@@ -222,7 +277,7 @@ class GUI:
     def launch(self):
 
         def videoThread():
-            self.scheduler.setLaunchTimeRange(self.launchTimeRange)
+            self.scheduler.setLaunchTimeRange(self.launchTimeRange, self.userData.getMediaType())
             self.scheduler.randomVideosEvent(self.userData.getPathToFolder())
 
         if not self.scheduler.getRunFlag() and self.pathValid:
