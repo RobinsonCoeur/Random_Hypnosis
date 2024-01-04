@@ -73,12 +73,14 @@ class GUI:
             self.pathValid = False
 
     def updateSliderLabel(self, sliderValue):
-        valuesList = str(sliderValue).split(".")
+        valuesList = str(round(float(sliderValue), 2)).split(".")
         hrs = valuesList[0]
         inMin = int(valuesList[1])
-
-        if inMin == 5:
-            inMin = 50
+        minList = str(inMin).split()
+        print(minList)
+        if (len(minList) == 1):
+            inMin = int(str(inMin) + "0")
+        
 
         self.scaleValue.configure(text = hrs + " hr and " + str(inMin*60/100).split(".")[0] + " min")
 
@@ -156,7 +158,7 @@ class GUI:
         bottomFrame.pack(side = BOTTOM)
 
         maxTime = self.userData.getMaxTime()
-        self.scale1 = CTkSlider(bottomFrame, from_= 0, to=maxTime, orientation="horizontal", number_of_steps = maxTime*4)
+        self.scale1 = CTkSlider(bottomFrame, from_= 0, to=maxTime, orientation="horizontal", number_of_steps = 20)
         self.scale1.set(self.userData.getTimeRange())
         self.scale1.place(relx = 0.3, rely = 0.5, anchor = CENTER)
 
