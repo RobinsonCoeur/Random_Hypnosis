@@ -76,11 +76,8 @@ class GUI:
         valuesList = str(round(float(sliderValue), 2)).split(".")
         hrs = valuesList[0]
         inMin = int(valuesList[1])
-        minList = str(inMin).split()
-        print(minList)
-        if (len(minList) == 1):
+        if (inMin < 9 and sliderValue > 0.1):
             inMin = int(str(inMin) + "0")
-        
 
         self.scaleValue.configure(text = hrs + " hr and " + str(inMin*60/100).split(".")[0] + " min")
 
