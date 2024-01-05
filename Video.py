@@ -68,11 +68,11 @@ class Video:
                 for item in videoSpace:
                     file = item.find_all("source")[0]["src"]
 
-            elif website == "xhamster":
+            '''elif website == "xhamster":
                 videoSpace = htmlData.find_all("div", id = "player-container")
                 for item in videoSpace:
                     file = item.find_all("video")
-                    print(file)
+                    print(file)'''
                     
 
         return file

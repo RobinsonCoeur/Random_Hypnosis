@@ -109,9 +109,14 @@ class GUI:
         optionsFrame = CTkFrame(masterFrame, height = 40, width = 400, fg_color = "#2b2b2b", corner_radius=5)
         optionsFrame.pack(side = TOP)
 
-        optionsFrame.buttonLaunch = CTkButton(master = optionsFrame, text="Settings", 
+        optionsFrame.buttonSettings = CTkButton(master = optionsFrame, text="Settings", 
                                   command= lambda : self.setupSettingsFrame(optionsFrame.master), width = 100, height = 19)
-        optionsFrame.buttonLaunch.place(relx = 0.15, rely = 0.5, anchor = CENTER)
+        optionsFrame.buttonSettings.place(relx = 0.15, rely = 0.5, anchor = CENTER)
+
+        #optionsFrame.buttonLinks = CTkButton(master = optionsFrame, text="Settings", command= lambda : self.setupOptionsGrid(optionsFrame.master), width = 100, height = 19)
+        #optionsFrame.buttonLinks.place(relx = 0.4, rely = 0.5, anchor = CENTER)
+
+        pass
 
     def setupMenuFrame(self) -> None:
         menuFrame = CTkFrame(self.root)
@@ -245,6 +250,43 @@ class GUI:
 
         return
     
+    def setupAddLinkFrame(self, previousFrame):
+        self.frameIndex = 1
+        self.clearFrame(previousFrame)
+
+        linkFrame = CTkFrame(self.root)
+        set_appearance_mode("dark")
+        linkFrame.pack(side="top", expand=True, fill="both")
+
+        #link entry
+        entryFrame = CTkFrame(linkFrame, height = 100, width = 400, fg_color = "#2b2b2b", corner_radius=5)
+        entryFrame.pack(side = TOP)
+
+        self.linkLoadEntry = self.createEntryInFrame(entryFrame, "Enter your video link here", 210)
+        self.linkLoadEntry.place(relx = 0.1, rely = 0.5, anchor = CENTER)
+
+        self.websiteEntry = self.createEntryInFrame(entryFrame, "Enter your video link here", 100)
+        self.websiteEntry.place(relx = 0.6, rely = 0.5, anchor = CENTER)
+
+        buttonRegister = CTkButton(master = entryFrame, text="Launch !", 
+                                  command= lambda : self.registerVideoLinks())
+        buttonRegister.place(relx = 0.5, rely = 0.3, anchor = CENTER)
+
+        #link save zone
+        self.linkSaveFrame = CTkFrame(linkFrame, height = 300, width = 400, fg_color = "#2b2b2b", corner_radius=5)
+        self.linkSaveFrame.pack(side = BOTTOM)
+
+        pass
+
+    def registerVideoLinks(self):
+        website = self.websiteEntry.get()
+        link = self.linkLoadEntry.get()
+
+        linkLabel = CTkLabel(self.linkSaveFrame, width = 100, text = "link", fg_color = ("white", self.labelBgColor), corner_radius= self.labelRad)
+        linkLabel.place(relx = 0.80, rely = 0.5, anchor = CENTER)
+
+        pass
+
     def returnToMenu(self, previousFrame):
         self.frameIndex = 0
         self.clearFrame(previousFrame)
