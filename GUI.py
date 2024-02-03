@@ -15,6 +15,9 @@ from threading import *
 class GUI:
     
     def __init__(self) -> None:
+        self.windowAccess = win.WindowsAccess()
+        self.windowAccess.showTaskBar()
+
         self.userData = user.UserData()
         self.userData.initSaveFile()
         self.userData.loadUserData()
@@ -248,6 +251,23 @@ class GUI:
                                   command= lambda : self.returnToMenu(settingsFrame), width = 70, height = 15)
         settingsFrame.leaveButton.place(relx = 0.5, rely = 0.9, anchor = CENTER)
 
+        #dangerosity mode
+
+        dangerChoiceFrame = CTkFrame(settingsFrame, height = 100, width = 300, fg_color = "#2b2b2b", corner_radius=5)
+        dangerChoiceFrame.place(relx = 0.5, rely = 0.65, anchor = CENTER)
+
+        maxLabel = CTkLabel(dangerChoiceFrame, width = 100, text = "Select Dangerosity Mode", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
+        maxLabel.place(relx = 0.5, rely = 0.35, anchor = CENTER)
+
+        comboboxVar = StringVar(value=self.userData.getMode())  # set initial value
+
+        def comboboxCallback(choice):
+            self.userData.setMode(choice)
+            return
+
+        self.modeWidget = CTkComboBox(dangerChoiceFrame, values=["Soft", "No Escape"], command=comboboxCallback, variable=comboboxVar)
+        self.modeWidget.place(relx = 0.5, rely = 0.65, anchor = CENTER)
+
         return
     
     def setupAddLinkFrame(self, previousFrame):
@@ -318,7 +338,7 @@ class GUI:
 
         def videoThread():
             self.scheduler.setLaunchTimeRange(self.launchTimeRange)
-            self.scheduler.randomVideosEvent(self.userData.getPathToFolder(), self.userData.getMediaType())
+            self.scheduler.randomVideosEvent(self.userData.getPathToFolder(), self.userData.getMediaType(), self.userData.getMode())
 
         if not self.scheduler.getRunFlag() and self.pathValid:
             winAccess = win.WindowsAccess()

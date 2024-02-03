@@ -11,7 +11,7 @@ import pyWinhook as pyHook
 import WindowsAccess as win
 
 class Video:
-    def __init__(self, linkToVideo, localFile: bool = True, website: str = "") -> None:
+    def __init__(self, linkToVideo, mode: str, localFile: bool = True, website: str = "") -> None:
 
         self.mediaPlayer = vlc.MediaPlayer()
         pygame.init()
@@ -21,6 +21,8 @@ class Video:
         self.exitType = 0 #0 running, 1 video over, 2 forced
 
         self.windowAccess = win.WindowsAccess()
+
+        self.mode = mode
 
         self.websitesList = ["hypnotube", "xhamster"]
 
@@ -111,7 +113,7 @@ class Video:
                 self.exitType = 1
                 self.exitVideo()
                 break
-            if keyboard.is_pressed("q"):
+            if keyboard.is_pressed("q") and self.mode == "Soft":
                 self.exitType = 2
                 self.exitVideo()
                 break

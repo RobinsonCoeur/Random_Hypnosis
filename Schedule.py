@@ -43,7 +43,7 @@ class Schedule:
     def getRunFlag(self):
         return self.run
 
-    def randomVideosEvent(self, folderPath: str, mediaType: str = "both"):
+    def randomVideosEvent(self, folderPath: str, mediaType: str = "both", mode: str = "Soft"):
         def loadContent():
             files = os.listdir(folderPath)
             chosenFile = files[random.randint(0, len(files)-1)]
@@ -57,7 +57,7 @@ class Schedule:
                 exitType = audio.getExitType()
 
             elif mediaType == "video" or mediaType == "both":
-                video = vid.Video(path)
+                video = vid.Video(path, mode)
                 video.launchVideo()
                 exitType = video.getExitType()
             

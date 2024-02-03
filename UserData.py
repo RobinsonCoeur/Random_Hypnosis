@@ -2,7 +2,7 @@ import os
 import csv
 
 class UserData:
-    def __init__(self, path: str = "Enter Your Folder Path Here", time: float = 2.50, maxTime: int = 5, mediaType: str = "both") -> None:
+    def __init__(self, path: str = "Enter Your Folder Path Here", time: float = 2.50, maxTime: int = 5, mediaType: str = "both", mode: str = "Soft") -> None:
 
         self.curDir = os.getcwd()
 
@@ -10,6 +10,7 @@ class UserData:
         self.timeRange = time
         self.maxTime = maxTime
         self.mediaType = mediaType
+        self.mode = mode
 
         pass 
 
@@ -28,6 +29,13 @@ class UserData:
 
     def getCurrentDir(self):
         return self.curDir
+    
+    def getMode(self):
+        return self.mode
+    
+    def setMode(self, inMode):
+        self.mode = inMode
+        return
 
     def initSaveFile(self):
         if not os.path.isfile(self.curDir + "\\save.csv"):
@@ -55,11 +63,12 @@ class UserData:
                 self.setTimeRange(float(userDataStorage[1]))
                 self.setMaxTime(int(userDataStorage[2]))
                 self.setMediaType(userDataStorage[3])
+                self.setMode(userDataStorage[4])
             except:
                 pass
 
     def saveUserData(self):
         with open("save.csv", "w", newline='') as f:
             writer = csv.writer(f)
-            userDataStorage = [self.pathToFolder, self.timeRange, self.maxTime, self.mediaType]
+            userDataStorage = [self.pathToFolder, self.timeRange, self.maxTime, self.mediaType, self.mode]
             writer.writerow(userDataStorage)
