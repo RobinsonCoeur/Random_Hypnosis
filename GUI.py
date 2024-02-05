@@ -29,6 +29,7 @@ class GUI:
         self.video = None
 
         self.pathValid = False
+        self.onLaunchFlag = True
 
         self.root = CTk()
         self.windowTitle = "Hypnosis Computer Virus"
@@ -81,7 +82,6 @@ class GUI:
         inMin = int(valuesList[1])
         if (inMin < 9 and sliderValue > 0.098):
             inMin = int(str(inMin) + "0")
-        print(inMin*60/100)
         self.scaleValue.configure(text = hrs + " hr and " + str(inMin*60/100).split(".")[0] + " min")
 
         return
@@ -93,7 +93,7 @@ class GUI:
 
             sliderValue = self.scale1.get()
 
-            if sliderValue != self.bufferTimerValue:
+            if self.onLaunchFlag or sliderValue != self.bufferTimerValue:
                 self.bufferTimerValue = sliderValue
                 self.userData.setTimeRange(sliderValue)
                 self.updateSliderLabel(sliderValue)
@@ -102,7 +102,7 @@ class GUI:
 
         if (self.frameIndex == 1):
             entry = self.maxTimeEntry.get()
-            if entry != '' and int(entry) < 1:
+            if entry != '' and int(entry) >= 1:
                 self.userData.setMaxTime(int(entry))
 
         self.root.after(50, self.checkFrameConditions)
