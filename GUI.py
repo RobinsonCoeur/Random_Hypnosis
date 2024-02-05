@@ -79,9 +79,9 @@ class GUI:
         valuesList = str(round(float(sliderValue), 2)).split(".")
         hrs = valuesList[0]
         inMin = int(valuesList[1])
-        if (inMin < 9 and sliderValue > 0.1):
+        if (inMin < 9 and sliderValue > 0.098):
             inMin = int(str(inMin) + "0")
-
+        print(inMin*60/100)
         self.scaleValue.configure(text = hrs + " hr and " + str(inMin*60/100).split(".")[0] + " min")
 
         return
@@ -96,13 +96,14 @@ class GUI:
             if sliderValue != self.bufferTimerValue:
                 self.bufferTimerValue = sliderValue
                 self.userData.setTimeRange(sliderValue)
+                self.updateSliderLabel(sliderValue)
 
-            self.updateSliderLabel(sliderValue)
             self.launchTimeRange = int(sliderValue*60*60) + 1
 
         if (self.frameIndex == 1):
-            if self.maxTimeEntry.get() != '':
-                self.userData.setMaxTime(int(self.maxTimeEntry.get()))
+            entry = self.maxTimeEntry.get()
+            if entry != '' and int(entry) < 1:
+                self.userData.setMaxTime(int(entry))
 
         self.root.after(50, self.checkFrameConditions)
 
