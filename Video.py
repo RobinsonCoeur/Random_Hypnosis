@@ -42,10 +42,11 @@ class Video:
         self.mediaPlayer.stop()
         pygame.quit()
         self.hm.UnhookKeyboard()
+        self.hm.UnhookMouse()
         self.windowAccess.showTaskBar()
         
     def blockKeys(self):
-        def OnKeyboardEvent(event):
+        def onKeyboardEvent(event):
             if event.Key.lower() in ['tab','alt']:#Keys to block:
                 return False    # block these keys
     
@@ -53,8 +54,14 @@ class Video:
             # return True to pass the event to other handlers
                 return True
 
+        def onMouseEvent(event):
+            return False
+
+        self.hm.MouseAll = onMouseEvent
+        self.hm.HookMouse()
+
         # watch for all keyboard events
-        self.hm.KeyDown = OnKeyboardEvent
+        self.hm.KeyDown = onKeyboardEvent
         # set the hook
         self.hm.HookKeyboard()
 
@@ -110,7 +117,6 @@ class Video:
         
         while True:
             pygame.event.pump()
-            #mouse.move(10000,0, absolute=True, duration=0)
             if time.time() - start >= self.mediaPlayer.get_length()/1000 - 0.5:
                 self.exitType = 1
                 self.exitVideo()

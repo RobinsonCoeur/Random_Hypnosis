@@ -83,7 +83,7 @@ class GUI:
         valuesList = str(round(float(sliderValue), 2)).split(".")
         hrs = valuesList[0]
         inMin = int(valuesList[1])
-        if (inMin < 9 and sliderValue > 0.098):
+        if (inMin <= 9 and sliderValue > 0.098):
             inMin = int(str(inMin) + "0")
         self.scaleValue.configure(text = hrs + " hr and " + str(inMin*60/100).split(".")[0] + " min")
 
@@ -120,7 +120,7 @@ class GUI:
                                   command= lambda : self.setupSettingsFrame(optionsFrame.master), width = 100, height = 19)
         optionsFrame.buttonSettings.place(relx = 0.15, rely = 0.5, anchor = CENTER)
 
-        optionsFrame.buttonLinks = CTkButton(master = optionsFrame, text="Video from Internet", command= lambda : self.setupAddLinkFrame(optionsFrame.master), width = 150, height = 19)
+        optionsFrame.buttonLinks = CTkButton(master = optionsFrame, text="Videos from Internet", command= lambda : self.setupAddLinkFrame(optionsFrame.master), width = 150, height = 19)
         optionsFrame.buttonLinks.place(relx = 0.5, rely = 0.5, anchor = CENTER)
 
         pass
@@ -204,6 +204,7 @@ class GUI:
 
         def checkboxVideoEvent():
             if checkboxVideo.get() == "on":
+                checkboxInternet.deselect()
                 if checkboxAudio.get() == "on":
                     self.userData.setMediaType("both")
                 else:
@@ -218,6 +219,7 @@ class GUI:
 
         def checkboxAudioEvent():
             if checkboxAudio.get() == "on":
+                checkboxInternet.deselect()
                 if checkboxVideo.get() == "on":
                     self.userData.setMediaType("both")
                 else:
