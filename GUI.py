@@ -21,12 +21,15 @@ class GUI:
         self.userData = user.UserData()
         self.userData.initSaveFile()
         self.userData.loadUserData()
+        self.linkList = self.userData.getVideoLinks()
 
         self.bufferPath = ""
         self.bufferTimerValue = 0
 
         self.scheduler = sch.Schedule()
         self.video = None
+
+        self.linkFramesList = []
 
         self.pathValid = False
         self.onLaunchFlag = True
@@ -117,8 +120,8 @@ class GUI:
                                   command= lambda : self.setupSettingsFrame(optionsFrame.master), width = 100, height = 19)
         optionsFrame.buttonSettings.place(relx = 0.15, rely = 0.5, anchor = CENTER)
 
-        #optionsFrame.buttonLinks = CTkButton(master = optionsFrame, text="Settings", command= lambda : self.setupOptionsGrid(optionsFrame.master), width = 100, height = 19)
-        #optionsFrame.buttonLinks.place(relx = 0.4, rely = 0.5, anchor = CENTER)
+        optionsFrame.buttonLinks = CTkButton(master = optionsFrame, text="Video from Internet", command= lambda : self.setupAddLinkFrame(optionsFrame.master), width = 150, height = 19)
+        optionsFrame.buttonLinks.place(relx = 0.5, rely = 0.5, anchor = CENTER)
 
         pass
 
@@ -190,13 +193,13 @@ class GUI:
 
         #max time
         maxLabel = CTkLabel(settingsFrame, width = 100, text = "Max time (hrs) slider value", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
-        maxLabel.place(relx = 0.5, rely = 0.35, anchor = CENTER)
+        maxLabel.place(relx = 0.5, rely = 0.45, anchor = CENTER)
 
         self.maxTimeEntry = self.createEntryInFrame(settingsFrame, str(self.userData.getMaxTime()), 50)
-        self.maxTimeEntry.place(relx = 0.5, rely = 0.45, anchor = CENTER)
+        self.maxTimeEntry.place(relx = 0.5, rely = 0.55, anchor = CENTER)
 
         #media type
-        mediaChoiceFrame = CTkFrame(settingsFrame, height = 100, width = 300, fg_color = "#2b2b2b", corner_radius=5)
+        mediaChoiceFrame = CTkFrame(settingsFrame, height = 150, width = 300, fg_color = "#2b2b2b", corner_radius=5)
         mediaChoiceFrame.pack(side = TOP)
 
         def checkboxVideoEvent():
@@ -227,6 +230,14 @@ class GUI:
 
             pass
 
+        def checkboxOnlineEvent():
+            if checkboxInternet.get() == "on":
+                self.userData.setMediaType("online")
+                checkboxVideo.deselect()
+                checkboxAudio.deselect()
+
+            pass
+
         media = self.userData.getMediaType()
 
         mediaLabel = CTkLabel(mediaChoiceFrame, width = 100, text = "Select what you want to play", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
@@ -237,16 +248,24 @@ class GUI:
                                      variable=check_var, onvalue="on", offvalue="off", checkbox_width = 21, checkbox_height = 21)
         checkboxVideo.place(relx = 0.5, rely = 0.5, anchor = CENTER)
 
-        if media == "audio" or media == "none":
+        if media == "audio" or media == "none"or media == "online":
             checkboxVideo.deselect()
         
         check_var = StringVar(value="on")
         checkboxAudio = CTkCheckBox(mediaChoiceFrame, text="Audio", command=checkboxAudioEvent,
                                      variable=check_var, onvalue="on", offvalue="off", checkbox_width = 21, checkbox_height = 21)
-        checkboxAudio.place(relx = 0.5, rely = 0.8, anchor = CENTER)
+        checkboxAudio.place(relx = 0.5, rely = 0.7, anchor = CENTER)
 
-        if media == "video" or media == "none":
+        if media == "video" or media == "none" or media == "online":
             checkboxAudio.deselect()
+
+        check_var = StringVar(value="on")
+        checkboxInternet = CTkCheckBox(mediaChoiceFrame, text="Hypnotube Link", command=checkboxOnlineEvent,
+                                     variable=check_var, onvalue="on", offvalue="off", checkbox_width = 21, checkbox_height = 21)
+        checkboxInternet.place(relx = 0.5, rely = 0.9, anchor = CENTER)
+
+        if media == "video" or media == "none" or media == "both" or media == "audio":
+            checkboxInternet.deselect()
 
         settingsFrame.leaveButton = CTkButton(master = settingsFrame, text="Exit", 
                                   command= lambda : self.returnToMenu(settingsFrame), width = 70, height = 15)
@@ -255,7 +274,7 @@ class GUI:
         #dangerosity mode
 
         dangerChoiceFrame = CTkFrame(settingsFrame, height = 100, width = 300, fg_color = "#2b2b2b", corner_radius=5)
-        dangerChoiceFrame.place(relx = 0.5, rely = 0.65, anchor = CENTER)
+        dangerChoiceFrame.place(relx = 0.5, rely = 0.7, anchor = CENTER)
 
         maxLabel = CTkLabel(dangerChoiceFrame, width = 100, text = "Select Dangerosity Mode", fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
         maxLabel.place(relx = 0.5, rely = 0.35, anchor = CENTER)
@@ -267,45 +286,94 @@ class GUI:
             return
 
         self.modeWidget = CTkComboBox(dangerChoiceFrame, values=["Soft", "No Escape"], command=comboboxCallback, variable=comboboxVar)
-        self.modeWidget.place(relx = 0.5, rely = 0.65, anchor = CENTER)
+        self.modeWidget.place(relx = 0.5, rely = 0.7, anchor = CENTER)
 
         return
     
-    def setupAddLinkFrame(self, previousFrame):
-        self.frameIndex = 1
-        self.clearFrame(previousFrame)
 
+    def setupAddLinkFrame(self, previousFrame):
+
+        def extractTitleFromLink(link:str):
+            titleRaw = link.split("/")[-1]
+            titleList = titleRaw.split("-")
+            title = ""
+
+            for word in titleList:
+                if not word.split(".")[0].isdigit():
+                    title = title + word
+                    title += " "
+
+            return title
+
+        def addTitleWidget(position: int, title: str, link: str, parentFrame: CTkFrame):
+            localFrame = CTkFrame(parentFrame, height = 50, width = 300, fg_color = "#2b2b2b", corner_radius=5)
+            localFrame.place(relx = 0.5, rely = position*0.1+0.05, anchor = CENTER)
+
+            linkLabel = CTkLabel(localFrame, width = 200, text = title, fg_color = ("white", self.labelBgColor), corner_radius=self.labelRad)
+            linkLabel.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+
+            buttonAddLink = CTkButton(master = localFrame, text="-", 
+                                  command= lambda : removeLink(localFrame, link), width = 25, height = 20, fg_color = ("white", self.labelBgColor))
+            buttonAddLink.place(relx = 0.9, rely = 0.5, anchor = CENTER)
+
+            self.linkFramesList.append(localFrame)
+            
+            pass
+
+        def addLink(parentFrame: CTkFrame):
+            link = linkLoadEntry.get().replace('"', "")
+
+            if len(self.linkList) < 9 and link not in self.linkList:
+                title = extractTitleFromLink(link)
+                addTitleWidget(len(self.linkList)+1, title, link, parentFrame)
+
+                self.linkList.append(link)
+
+            pass
+
+        def updateLinksFramePosition():
+            for i in range(0, len(self.linkFramesList)):
+                self.linkFramesList[i].place(relx = 0.5, rely = (i+1)*0.1+0.05, anchor = CENTER)
+
+        def removeLink(frame:CTkFrame, link:str):
+            frame.destroy()
+            self.linkList.remove(link)
+            self.linkFramesList.remove(frame)
+            updateLinksFramePosition()
+            pass
+
+        self.frameIndex = 2
+        self.clearFrame(previousFrame)
+            
         linkFrame = CTkFrame(self.root)
         set_appearance_mode("dark")
-        linkFrame.pack(side="top", expand=True, fill="both")
+        linkFrame.pack(side="top", expand=True, fill="both")  
+
+        linksSavedFrame = CTkFrame(linkFrame, height = 400, width = 300, fg_color = "#2b2b2b", corner_radius=5)
+        linksSavedFrame.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+
+        for i in range(0, len(self.linkList)):
+            link = self.linkList[i]
+            title = extractTitleFromLink(link)
+            addTitleWidget(i+1, title, link, linksSavedFrame)
 
         #link entry
-        entryFrame = CTkFrame(linkFrame, height = 100, width = 400, fg_color = "#2b2b2b", corner_radius=5)
-        entryFrame.pack(side = TOP)
+        linkLoadEntry = self.createEntryInFrame(linkFrame, "Enter your video link here", 210)
+        linkLoadEntry.place(relx = 0.5, rely = 0.05, anchor = CENTER)
 
-        self.linkLoadEntry = self.createEntryInFrame(entryFrame, "Enter your video link here", 210)
-        self.linkLoadEntry.place(relx = 0.1, rely = 0.5, anchor = CENTER)
+        buttonAddLink = CTkButton(master = linkFrame, text="Add", 
+                                  command= lambda : addLink(linksSavedFrame), width = 50)
+        buttonAddLink.place(relx = 0.85, rely = 0.05, anchor = CENTER)
 
-        self.websiteEntry = self.createEntryInFrame(entryFrame, "Enter your video link here", 100)
-        self.websiteEntry.place(relx = 0.6, rely = 0.5, anchor = CENTER)
-
-        buttonRegister = CTkButton(master = entryFrame, text="Launch !", 
-                                  command= lambda : self.registerVideoLinks())
-        buttonRegister.place(relx = 0.5, rely = 0.3, anchor = CENTER)
-
-        #link save zone
-        self.linkSaveFrame = CTkFrame(linkFrame, height = 300, width = 400, fg_color = "#2b2b2b", corner_radius=5)
-        self.linkSaveFrame.pack(side = BOTTOM)
+        buttonRegister = CTkButton(master = linkFrame, text="Back", 
+                                  command= lambda : self.registerVideoLinks(linkFrame))
+        buttonRegister.place(relx = 0.5, rely = 0.95, anchor = CENTER)
 
         pass
 
-    def registerVideoLinks(self):
-        website = self.websiteEntry.get()
-        link = self.linkLoadEntry.get()
-
-        linkLabel = CTkLabel(self.linkSaveFrame, width = 100, text = "link", fg_color = ("white", self.labelBgColor), corner_radius= self.labelRad)
-        linkLabel.place(relx = 0.80, rely = 0.5, anchor = CENTER)
-
+    def registerVideoLinks(self, previousFrame):
+        self.returnToMenu(previousFrame)
+        self.userData.setVideoLinks(self.linkList)
         pass
 
     def returnToMenu(self, previousFrame):
@@ -339,20 +407,21 @@ class GUI:
 
         def videoThread():
             self.scheduler.setLaunchTimeRange(self.launchTimeRange)
-            self.scheduler.randomVideosEvent(self.userData.getPathToFolder(), self.userData.getMediaType(), self.userData.getMode())
+            self.scheduler.randomVideosEvent(self.userData.getPathToFolder(), self.userData.getMediaType(), self.userData.getMode(), self.userData.getVideoLinks())
 
-        if not self.scheduler.getRunFlag() and self.pathValid:
-            winAccess = win.WindowsAccess()
-            winAccess.minimizeWindow(self.windowTitle)
+        if not self.scheduler.getRunFlag():
+            if self.userData.getMediaType() != "online" and self.pathValid or self.userData.getMediaType() == "online":
+                winAccess = win.WindowsAccess()
+                winAccess.minimizeWindow(self.windowTitle)
 
-            self.checkBoxStatus.select()
-            self.checkBoxStatus.configure(text="Progam On")
+                self.checkBoxStatus.select()
+                self.checkBoxStatus.configure(text="Progam On")
 
-            t1=Thread(target=videoThread)
-            t1.daemon = True
-            t1.start()
+                t1=Thread(target=videoThread)
+                t1.daemon = True
+                t1.start()
 
-            self.scheduler.setRunFlag(True)
+                self.scheduler.setRunFlag(True)
     
     def clearFrame(self, frame: CTkFrame):
         for widget in frame.winfo_children():

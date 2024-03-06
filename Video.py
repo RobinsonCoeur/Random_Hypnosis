@@ -1,6 +1,7 @@
 import vlc
 import time
 import keyboard
+import mouse
 
 import requests
 from bs4 import BeautifulSoup
@@ -109,6 +110,7 @@ class Video:
         
         while True:
             pygame.event.pump()
+            #mouse.move(10000,0, absolute=True, duration=0)
             if time.time() - start >= self.mediaPlayer.get_length()/1000 - 0.5:
                 self.exitType = 1
                 self.exitVideo()

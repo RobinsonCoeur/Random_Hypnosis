@@ -1,8 +1,9 @@
 import os
 import csv
+import json 
 
 class UserData:
-    def __init__(self, path: str = "Enter Your Folder Path Here", time: float = 2.50, maxTime: int = 5, mediaType: str = "both", mode: str = "Soft") -> None:
+    def __init__(self, path: str = "Enter Your Folder Path Here", time: float = 2.50, maxTime: int = 5, mediaType: str = "both", mode: str = "Soft", videoLinks: list = []) -> None:
 
         self.curDir = os.getcwd()
 
@@ -11,8 +12,16 @@ class UserData:
         self.maxTime = maxTime
         self.mediaType = mediaType
         self.mode = mode
+        self.videoLinks = videoLinks
 
         pass 
+
+    def setVideoLinks(self, videoLinks:list):
+        self.videoLinks = videoLinks
+        pass
+
+    def getVideoLinks(self):
+        return self.videoLinks
 
     def setMediaType(self, type):
         self.mediaType = type
@@ -41,6 +50,9 @@ class UserData:
         if not os.path.isfile(self.curDir + "\\save.csv"):
             open(self.curDir + "\\save.csv", "w", newline='')
 
+        if not os.path.isfile(self.curDir + "\\links.csv"):
+            open(self.curDir + "\\links.csv", "w", newline='')
+
     def getPathToFolder(self):
         return self.pathToFolder
     
@@ -58,6 +70,7 @@ class UserData:
             reader = csv.reader(f)
             for row in reader:
                 userDataStorage = row
+
             try:
                 self.setPathToFolder(userDataStorage[0])
                 self.setTimeRange(float(userDataStorage[1]))
@@ -67,8 +80,23 @@ class UserData:
             except:
                 pass
 
+        with open(self.curDir+ "\\links.csv", "r") as f:
+                reader = csv.reader(f)
+                linksList = []
+                for row in reader:
+                    try:
+                        linksList.append(row[0])
+                    except:
+                        pass
+                self.setVideoLinks(linksList)
+
+
     def saveUserData(self):
         with open("save.csv", "w", newline='') as f:
             writer = csv.writer(f)
             userDataStorage = [self.pathToFolder, self.timeRange, self.maxTime, self.mediaType, self.mode]
             writer.writerow(userDataStorage)
+
+        with open("links.csv", "w", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(self.videoLinks)

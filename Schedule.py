@@ -43,26 +43,34 @@ class Schedule:
     def getRunFlag(self):
         return self.run
 
-    def randomVideosEvent(self, folderPath: str, mediaType: str = "both", mode: str = "Soft"):
+    def randomVideosEvent(self, folderPath: str, mediaType: str = "both", mode: str = "Soft", linksList: list = []):
         def loadContent():
-            files = os.listdir(folderPath)
-            chosenFile = files[random.randint(0, len(files)-1)]
-            path = r"{}".format(folderPath + "\\" + chosenFile)
+            if not mediaType == "online":
+                files = os.listdir(folderPath)
+                chosenFile = files[random.randint(0, len(files)-1)]
+                path = r"{}".format(folderPath + "\\" + chosenFile)
 
-            print(mediaType)
+                if "mp3" in chosenFile.split(".") and (mediaType == "audio" or mediaType == "both"):
+                    audio = aud.Audio(path)
+                    audio.launchAudio()
+                    exitType = audio.getExitType()
 
-            if "mp3" in chosenFile.split(".") and (mediaType == "audio" or mediaType == "both"):
-                audio = aud.Audio(path)
-                audio.launchAudio()
-                exitType = audio.getExitType()
+                elif mediaType == "video" or mediaType == "both":
+                    video = vid.Video(path, mode)
+                    video.launchVideo()
+                    exitType = video.getExitType()
+                else:
+                    exitType = 3
 
-            elif mediaType == "video" or mediaType == "both":
-                video = vid.Video(path, mode)
-                video.launchVideo()
-                exitType = video.getExitType()
-            
             else:
-                exitType = 3
+                path = linksList[random.randint(0, len(linksList)-1)]
+            
+                if mediaType == "online":
+                    video = vid.Video(path, mode, localFile=False, website = "hypnotube")
+                    video.launchVideo()
+                    exitType = video.getExitType()
+                else:
+                    exitType = 3
 
             if self.run:
                 if exitType == 1:
