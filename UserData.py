@@ -84,10 +84,8 @@ class UserData:
                 reader = csv.reader(f)
                 linksList = []
                 for row in reader:
-                    try:
-                        linksList.append(row[0])
-                    except:
-                        pass
+                    for item in row:
+                        linksList.append(item)
                 self.setVideoLinks(linksList)
 
 
