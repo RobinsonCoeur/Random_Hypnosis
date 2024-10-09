@@ -52,10 +52,10 @@ class UserData:
 
     def initSaveFile(self):
         if not os.path.isfile(self.curDir + "\\save.csv"):
-            open(self.curDir + "\\save.csv", "w", newline='')
+            open(self.curDir + "\\userdata\\save.csv", "w", newline='')
 
         if not os.path.isfile(self.curDir + "\\links.csv"):
-            open(self.curDir + "\\links.csv", "w", newline='')
+            open(self.curDir + "\\userdata\\links.csv", "w", newline='')
 
     def getPathToFolder(self):
         return self.pathToFolder
@@ -70,7 +70,7 @@ class UserData:
         self.timeRange = time
 
     def loadUserData(self):
-        with open(self.curDir+ "\\save.csv", "r") as f:
+        with open(self.curDir+ "\\userdata\\save.csv", "r") as f:
             reader = csv.reader(f)
             for row in reader:
                 userDataStorage = row
@@ -84,7 +84,7 @@ class UserData:
             except:
                 pass
 
-        with open(self.curDir+ "\\links.csv", "r") as f:
+        with open(self.curDir+ "\\userdata\\links.csv", "r") as f:
                 reader = csv.reader(f)
                 linksList = []
                 for row in reader:
@@ -94,7 +94,7 @@ class UserData:
 
 
     def saveUserData(self):
-        with open("save.csv", "w", newline='') as f:
+        with open("userdata/save.csv", "w", newline='') as f:
             writer = csv.writer(f)
             userDataStorage = [self.pathToFolder, self.timeRange, self.maxTime, self.mediaType, self.mode]
             writer.writerow(userDataStorage)
@@ -102,7 +102,7 @@ class UserData:
         self.saveLinks() 
 
     def saveLinks(self):
-        with open("links.csv", "w", newline='') as f:
+        with open("userdata/links.csv", "w", newline='') as f:
             writer = csv.writer(f)
             writer.writerow(self.videoLinks)
         pass
