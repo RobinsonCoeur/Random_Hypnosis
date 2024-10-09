@@ -38,7 +38,7 @@ class GUI:
         self.windowTitle = "Hypnosis Computer Virus"
         self.root.after(201, lambda :self.root.iconbitmap(self.userData.getCurrentDir() + '\\myIcon.ico'))
         self.root.title(self.windowTitle)
-        self.root.geometry('380x420')
+        self.root.geometry('380x620')
         self.frameIndex = 0 #0 menu, 1 settings
 
         self.labelBgColor = "#3e3261"
@@ -120,7 +120,7 @@ class GUI:
                                   command= lambda : self.setupSettingsFrame(optionsFrame.master), width = 100, height = 19)
         optionsFrame.buttonSettings.place(relx = 0.15, rely = 0.5, anchor = CENTER)
 
-        optionsFrame.buttonLinks = CTkButton(master = optionsFrame, text="Videos from Internet", command= lambda : self.setupAddLinkFrame(optionsFrame.master), width = 150, height = 19)
+        optionsFrame.buttonLinks = CTkButton(master = optionsFrame, text="Videos from Hypnotube", command= lambda : self.setupAddLinkFrame(optionsFrame.master), width = 150, height = 19)
         optionsFrame.buttonLinks.place(relx = 0.5, rely = 0.5, anchor = CENTER)
 
         pass
@@ -294,16 +294,20 @@ class GUI:
     
 
     def setupAddLinkFrame(self, previousFrame):
-
         def extractTitleFromLink(link:str):
-            titleRaw = link.split("/")[-1]
-            titleList = titleRaw.split("-")
-            title = ""
+            linkListed = link.split("/")
+            
+            if "channels" in linkListed:
+                title = linkListed[-2] + " category"
+            else:
+                titleRaw = linkListed[-1]
+                titleList = titleRaw.split("-")
+                title = ""
 
-            for word in titleList:
-                if not word.split(".")[0].isdigit():
-                    title = title + word
-                    title += " "
+                for word in titleList:
+                    if not word.split(".")[0].isdigit():
+                        title = title + word
+                        title += " "
 
             return title
 
@@ -322,15 +326,17 @@ class GUI:
             
             pass
 
-        def addLink(parentFrame: CTkFrame):
+        def addLinkFromtextEntry(parentFrame: CTkFrame):
             link = linkLoadEntry.get().replace('"', "")
+            addLink(link, parentFrame)
+            pass
 
+        def addLink(link, parentFrame):
             if len(self.linkList) < 9 and link not in self.linkList:
                 title = extractTitleFromLink(link)
                 addTitleWidget(len(self.linkList)+1, title, link, parentFrame)
 
                 self.linkList.append(link)
-
             pass
 
         def updateLinksFramePosition():
@@ -343,6 +349,21 @@ class GUI:
             self.linkFramesList.remove(frame)
             updateLinksFramePosition()
             pass
+
+        def clearLinkFrame(parentFrame : CTkFrame):
+            for widget in parentFrame.winfo_children():
+                widget.destroy()
+            self.linkList = []
+            pass
+
+        def loadLinkList(parentFrame : Frame):
+            linkList = self.userData.loadLinkList(self.root)
+
+            clearLinkFrame(parentFrame)
+
+            for link in linkList:
+                addLink(link, parentFrame)
+        pass
 
         self.frameIndex = 2
         self.clearFrame(previousFrame)
@@ -360,15 +381,47 @@ class GUI:
             addTitleWidget(i+1, title, link, linksSavedFrame)
 
         #link entry
-        linkLoadEntry = self.createEntryInFrame(linkFrame, "Enter your video link here", 210)
+        linkLoadEntry = self.createEntryInFrame(linkFrame, "Enter your video or category link here", 225)
         linkLoadEntry.place(relx = 0.5, rely = 0.05, anchor = CENTER)
 
         buttonAddLink = CTkButton(master = linkFrame, text="Add", 
-                                  command= lambda : addLink(linksSavedFrame), width = 50)
-        buttonAddLink.place(relx = 0.85, rely = 0.05, anchor = CENTER)
+                                  command= lambda : addLinkFromtextEntry(linksSavedFrame), width = 50)
+        buttonAddLink.place(relx = 0.87, rely = 0.05, anchor = CENTER)
+
+        buttonSaveLinkList = CTkButton(master = linkFrame, text="Save List", 
+                                  command= lambda : self.setupFrameSaveLinkList(linkFrame))
+        buttonSaveLinkList.place(relx = 0.7, rely = 0.87, anchor = CENTER)
+
+        buttonLoadLinkList = CTkButton(master = linkFrame, text="Load List", 
+                                  command= lambda : loadLinkList(linksSavedFrame))
+        buttonLoadLinkList.place(relx = 0.3, rely = 0.87, anchor = CENTER)
 
         buttonRegister = CTkButton(master = linkFrame, text="Back", 
                                   command= lambda : self.registerVideoLinks(linkFrame))
+        buttonRegister.place(relx = 0.5, rely = 0.95, anchor = CENTER)
+
+        pass
+
+    def setupFrameSaveLinkList(self, previousFrame):
+        def saveLinkList(parentFrame):
+            self.userData.saveLinkList(self.linkList, fileName.get())
+            self.setupAddLinkFrame(parentFrame)
+            pass
+
+        self.clearFrame(previousFrame)  
+
+        saveLinkFrame = CTkFrame(self.root)
+        set_appearance_mode("dark")
+        saveLinkFrame.pack(side="top", expand=True, fill="both")  
+
+        savedFrame = CTkFrame(saveLinkFrame, height = 400, width = 300, fg_color = "#2b2b2b", corner_radius=5)
+        savedFrame.place(relx = 0.5, rely = 0.5, anchor = CENTER)
+
+        fileName = self.createEntryInFrame(savedFrame, "Enter your save file name here", 210)
+        fileName.place(relx = 0.5, rely = 0.05, anchor = CENTER)
+
+        buttonRegister = CTkButton(master = saveLinkFrame, text="Save", 
+                                  command= lambda : saveLinkList(saveLinkFrame))
         buttonRegister.place(relx = 0.5, rely = 0.95, anchor = CENTER)
 
         pass

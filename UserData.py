@@ -2,6 +2,9 @@ import os
 import csv
 import json 
 
+from customtkinter import *
+from customtkinter import filedialog
+
 class UserData:
     def __init__(self, path: str = "Enter Your Folder Path Here", time: float = 2.50, maxTime: int = 5, mediaType: str = "both", mode: str = "Soft", videoLinks: list = []) -> None:
 
@@ -18,6 +21,7 @@ class UserData:
 
     def setVideoLinks(self, videoLinks:list):
         self.videoLinks = videoLinks
+        self.saveLinks()
         pass
 
     def getVideoLinks(self):
@@ -95,6 +99,27 @@ class UserData:
             userDataStorage = [self.pathToFolder, self.timeRange, self.maxTime, self.mediaType, self.mode]
             writer.writerow(userDataStorage)
 
+        self.saveLinks() 
+
+    def saveLinks(self):
         with open("links.csv", "w", newline='') as f:
             writer = csv.writer(f)
             writer.writerow(self.videoLinks)
+        pass
+
+    def saveLinkList(self, linkList, saveFileName : str):
+        fileName = saveFileName + ".csv"
+        with open(fileName, "w", newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(linkList)
+        pass
+    
+    def loadLinkList(self, root : CTk):
+        folderPath = filedialog.askopenfilename(title = "Select a File")
+        with open(folderPath, "r") as f:
+            reader = csv.reader(f)
+            linksList = []
+            for row in reader:
+                for item in row:
+                    linksList.append(item)
+        return linksList

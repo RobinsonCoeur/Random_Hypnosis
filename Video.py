@@ -10,12 +10,15 @@ import pygame
 import pyWinhook as pyHook
 
 import WindowsAccess as win
+import HypnotubeAccess as acchyp
 
 class Video:
-    def __init__(self, linkToVideo, mode: str, localFile: bool = True, website: str = "") -> None:
+    def __init__(self, link, mode: str, localFile: bool = True, website: str = "hypnotube") -> None:
 
         self.mediaPlayer = vlc.MediaPlayer()
         pygame.init()
+
+        self.hypnotubeAccess = acchyp.HypnotubeAccess()
 
         self.hm = pyHook.HookManager()
 
@@ -28,9 +31,11 @@ class Video:
         self.websitesList = ["hypnotube", "xhamster"]
 
         if localFile:
-            self.file = linkToVideo
+            self.file = link
         else:
-            self.file = self.extractVideoFromLink(linkToVideo, website)
+            if website  == "hypnotube":
+                self.file = self.hypnotubeAccess.extractVideoFromLink(link)
+                print(self.file)
 
         pass
 
@@ -64,28 +69,6 @@ class Video:
         self.hm.KeyDown = onKeyboardEvent
         # set the hook
         self.hm.HookKeyboard()
-
-    def extractVideoFromLink(self, link: str, website: str):
-        file = ""
-        #extract file like https://cdn.hypnotube.com/videos/5/f/d/5/d/5fd5d34293d6a.mp4 from link html
-        
-        if website in self.websitesList:
-            page = requests.get(link)
-            htmlData = BeautifulSoup(page.content, "html.parser")
-
-            if website == "hypnotube":
-                videoSpace = htmlData.find_all("div", class_ = "inner-stage")
-                for item in videoSpace:
-                    file = item.find_all("source")[0]["src"]
-
-            '''elif website == "xhamster":
-                videoSpace = htmlData.find_all("div", id = "player-container")
-                for item in videoSpace:
-                    file = item.find_all("video")
-                    print(file)'''
-                    
-
-        return file
         
 
     def launchVideo(self):
